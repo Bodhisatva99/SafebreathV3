@@ -1,5 +1,6 @@
 import React from 'react';
 import { Download } from 'lucide-react';
+import { APP_DOWNLOAD_URL } from '../lib/supabase';
 
 interface DownloadAppButtonProps {
   variant?: 'hero' | 'header' | 'mobile-nav' | 'card' | 'footer' | 'inline';
@@ -10,8 +11,8 @@ export const DownloadAppButton: React.FC<DownloadAppButtonProps> = ({
   variant = 'hero',
   className = '',
 }) => {
-  // Exact GitHub Release asset URL specified by user
-  const downloadUrl = "https://github.com/Bodhisatva99/SafebreathV3/releases/download/V3.0/SafeBreathV3.apk";
+  // Permanent GitHub Release asset URL specified by user
+  const downloadUrl = APP_DOWNLOAD_URL || "https://github.com/Bodhisatva99/SafebreathV3/releases/download/V3.0.0/SafeBreathV3.apk";
 
   if (variant === 'header') {
     return (
@@ -19,14 +20,13 @@ export const DownloadAppButton: React.FC<DownloadAppButtonProps> = ({
         href={downloadUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className={`hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-emerald-300 bg-emerald-50/90 hover:bg-emerald-100 text-emerald-900 transition-all text-xs font-semibold group shadow-sm ${className}`}
+        className={`hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-emerald-300/80 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 transition-all text-xs font-semibold group shadow-sm shrink-0 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-emerald-500/40 ${className}`}
         title="Download SafeBreath for Android (Android APK)"
+        aria-label="Download SafeBreath for Android (Android APK)"
       >
         <Download className="w-3.5 h-3.5 text-emerald-700 group-hover:translate-y-0.5 transition-transform shrink-0" />
-        <div className="text-left leading-tight">
-          <div className="font-semibold">Download SafeBreath for Android</div>
-          <div className="text-[9px] font-normal text-emerald-700">(Android APK)</div>
-        </div>
+        <span>Download SafeBreath for Android</span>
+        <span className="text-[10px] text-emerald-700 font-normal hidden xl:inline">(Android APK)</span>
       </a>
     );
   }
