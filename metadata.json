@@ -1,0 +1,6 @@
+{
+  "name": "SafeBreath — Smart Multi-Gas Detection System",
+  "description": "SafeBreath: A low-cost, connected atmospheric safety system combining multi-gas detection (CO, VOC, LPG), environmental monitoring, autonomous local alarms, offline MicroSD logging, and remote cloud alerts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
