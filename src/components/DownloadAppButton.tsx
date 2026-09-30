@@ -4,19 +4,6 @@ import { APP_DOWNLOAD_URL } from '../lib/supabase';
 
 interface DownloadAppButtonProps {
   variant?: 'hero' | 'header' | 'mobile-nav' | 'card' | 'footer' | 'inline';
-  className?: stringIt looks like whatever platform or text editor you copied this from automatically converted your React JSX tags into Markdown links (`[text]({url})`) and stripped out all the HTML elements and Tailwind classes. 
-
-Because the code you pasted is currently invalid TypeScript/React (it will throw syntax errors if you try to run it), I have fully restored the component for you below. 
-
-This version includes the iframe download fix you mentioned, properly wires up the `lucide-react` icon, applies the click handler to prevent the blank tab issue, and restores a full set of Tailwind classes for all 6 variants.
-
-```tsx
-import React from 'react';
-import { Download } from 'lucide-react';
-import { APP_DOWNLOAD_URL } from '../lib/supabase';
-
-interface DownloadAppButtonProps {
-  variant?: 'hero' | 'header' | 'mobile-nav' | 'card' | 'footer' | 'inline';
   className?: string;
 }
 
@@ -24,102 +11,108 @@ export const DownloadAppButton: React.FC<DownloadAppButtonProps> = ({
   variant = 'hero',
   className = '',
 }) => {
-  // Permanent GitHub Release asset URL pointing to the latest version
-  const downloadUrl = APP_DOWNLOAD_URL || "[https://github.com/Bodhisatva99/SafebreathV3/releases/latest/download/SafeBreathV3.apk](https://github.com/Bodhisatva99/SafebreathV3/releases/latest/download/SafeBreathV3.apk)";
-
-  // Trigger download via hidden iframe to prevent blank/redirected mobile tabs
-  const handleDownload = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = downloadUrl;
-    document.body.appendChild(iframe);
-
-    // Clean up DOM after download starts
-    setTimeout(() => {
-      document.body.removeChild(iframe);
-    }, 2000);
-  };
+  // Permanent GitHub Release asset URL specified by user
+  const downloadUrl = APP_DOWNLOAD_URL || "https://github.com/Bodhisatva99/SafebreathV3/releases/download/V3.0.0/SafeBreathV3.apk";
 
   if (variant === 'header') {
     return (
-      <a 
-        href={downloadUrl} 
-        onClick={handleDownload}
-        className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors ${className}`}
+      <a
+        href={downloadUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-emerald-300/80 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 transition-all text-xs font-semibold group shadow-sm shrink-0 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-emerald-500/40 ${className}`}
+        title="Download SafeBreath for Android (Android APK)"
+        aria-label="Download SafeBreath for Android (Android APK)"
       >
-        <Download className="w-4 h-4"/>
-        <div className="flex flex-col text-left leading-tight">
-          <span>Download SafeBreath</span>
-          <span className="text-[10px] text-blue-200">(Android APK)</span>
-        </div>
+        <Download className="w-3.5 h-3.5 text-emerald-700 group-hover:translate-y-0.5 transition-transform shrink-0" />
+        <span>Download SafeBreath for Android</span>
+        <span className="text-[10px] text-emerald-700 font-normal hidden xl:inline">(Android APK)</span>
       </a>
     );
   }
 
   if (variant === 'mobile-nav') {
     return (
-      <a 
-        href={downloadUrl} 
-        onClick={handleDownload}
-        className={`flex w-full items-center justify-center gap-2 px-4 py-3 text-base font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors ${className}`}
+      <a
+        href={downloadUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900 font-semibold text-sm shadow-sm hover:bg-emerald-100 transition-colors ${className}`}
+        title="Download SafeBreath for Android (Android APK)"
       >
-        <Download className="w-5 h-5"/>
-        <span>Download SafeBreath APK</span>
+        <Download className="w-4 h-4 text-emerald-700 shrink-0" />
+        <div className="flex flex-col sm:flex-row items-center sm:gap-1.5 text-center">
+          <span>Download SafeBreath for Android</span>
+          <span className="text-xs font-normal text-emerald-700">(Android APK)</span>
+        </div>
       </a>
     );
   }
 
   if (variant === 'card') {
     return (
-      <a 
-        href={downloadUrl} 
-        onClick={handleDownload}
-        className={`inline-flex w-full items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors ${className}`}
+      <a
+        href={downloadUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`inline-flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition-colors shadow-sm ${className}`}
+        title="Download SafeBreath for Android (Android APK)"
       >
-        <Download className="w-4 h-4"/>
-        <span>Download APK</span>
+        <Download className="w-3.5 h-3.5 shrink-0" />
+        <div className="flex items-center gap-1.5">
+          <span>Download SafeBreath for Android</span>
+          <span className="text-[10px] font-normal text-purple-200">(Android APK)</span>
+        </div>
       </a>
     );
   }
 
   if (variant === 'footer') {
     return (
-      <a 
-        href={downloadUrl} 
-        onClick={handleDownload}
-        className={`inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors ${className}`}
+      <a
+        href={downloadUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200 text-xs font-semibold transition-colors ${className}`}
+        title="Download SafeBreath for Android (Android APK)"
       >
-        <Download className="w-4 h-4"/>
-        <span>Download SafeBreath (APK)</span>
+        <Download className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+        <div className="flex items-center gap-1.5">
+          <span>Download SafeBreath for Android</span>
+          <span className="text-[10px] text-slate-500 font-normal">(Android APK)</span>
+        </div>
       </a>
     );
   }
 
   if (variant === 'inline') {
     return (
-      <a 
-        href={downloadUrl} 
-        onClick={handleDownload}
-        className={`inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline font-medium ${className}`}
+      <a
+        href={downloadUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`inline-flex items-center gap-2 text-emerald-700 hover:text-emerald-800 font-semibold text-xs transition-colors ${className}`}
       >
-        <Download className="w-4 h-4"/>
-        <span>Download the Android APK</span>
+        <Download className="w-3.5 h-3.5 shrink-0" />
+        <span>Download SafeBreath for Android</span>
+        <span className="font-normal">(Android APK)</span>
       </a>
     );
   }
 
   // Default: 'hero'
   return (
-    <a 
-      href={downloadUrl} 
-      onClick={handleDownload}
-      className={`inline-flex items-center gap-3 px-8 py-4 text-lg font-bold text-white bg-blue-600 rounded-2xl shadow-lg hover:bg-blue-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 ${className}`}
+    <a
+      href={downloadUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`px-6 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all shadow-sm hover:shadow flex items-center gap-2.5 group cursor-pointer ${className}`}
+      title="Download SafeBreath for Android (Android APK)"
     >
-      <Download className="w-6 h-6"/>
-      <div className="flex flex-col text-left leading-tight">
-        <span>Download SafeBreath</span>
-        <span className="text-sm font-normal text-blue-200">Free Android APK</span>
+      <Download className="w-4 h-4 group-hover:translate-y-0.5 transition-transform shrink-0" />
+      <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-1.5 text-left">
+        <span>Download SafeBreath for Android</span>
+        <span className="text-xs font-normal text-emerald-100">(Android APK)</span>
       </div>
     </a>
   );
