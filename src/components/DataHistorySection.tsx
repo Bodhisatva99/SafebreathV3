@@ -15,7 +15,7 @@ export const DataHistorySection: React.FC = () => {
       let query = supabase
         .from('sensor_logs')
         .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
         .limit(30);
 
       if (filterState === 'alerts') {
@@ -81,22 +81,22 @@ export const DataHistorySection: React.FC = () => {
         <div>
           <div className="inline-flex items-center gap-2 text-xs font-mono text-emerald-800 font-semibold uppercase tracking-wider mb-1">
             <Database className="w-3.5 h-3.5" />
-            <span>REAL DATABASE TELEMETRY LOGS</span>
+            <span>AUTHENTIC DATABASE TELEMETRY LEDGER</span>
           </div>
           <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            Live Telemetry & Sensor Logs Ledger
+            Historical Telemetry & Alert History
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Querying real records directly from <code>public.sensor_logs</code> on Supabase.
+            Querying authentic historical records directly from <code>public.sensor_logs</code> on Supabase, ordered newest to oldest.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Filter Pills */}
-          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200">
+          <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200">
             <button
               onClick={() => setFilterState('all')}
-              className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
                 filterState === 'all' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -104,7 +104,7 @@ export const DataHistorySection: React.FC = () => {
             </button>
             <button
               onClick={() => setFilterState('alerts')}
-              className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
                 filterState === 'alerts' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -112,7 +112,7 @@ export const DataHistorySection: React.FC = () => {
             </button>
             <button
               onClick={() => setFilterState('safe')}
-              className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
                 filterState === 'safe' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -123,8 +123,9 @@ export const DataHistorySection: React.FC = () => {
           <button
             onClick={fetchRealLogs}
             disabled={isLoading}
-            className="p-2 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+            className="p-2 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shrink-0"
             title="Refresh database records"
+            aria-label="Refresh database records"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
@@ -135,28 +136,32 @@ export const DataHistorySection: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Left: Real Logs Table (7 Cols) */}
-        <div className="lg:col-span-7 bg-slate-50/60 rounded-2xl border border-slate-200 overflow-hidden space-y-2 p-4">
+        <div className="lg:col-span-7 bg-slate-50/60 rounded-2xl border border-slate-200 overflow-hidden space-y-2 p-3 sm:p-4">
           <div className="flex items-center justify-between text-xs font-mono text-slate-500 pb-2 px-1">
             <span>SHOWING LAST {logs.length} RECORDS</span>
-            <span>TOTAL RECORDED: {totalCount}</span>
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline">TOTAL RECORDED: {totalCount}</span>
+              <span className="sm:hidden text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">← Swipe Table →</span>
+            </div>
           </div>
 
           <div className="overflow-x-auto max-h-[380px] overflow-y-auto rounded-xl border border-slate-200 bg-white">
             <table className="w-full text-left text-xs font-mono">
               <thead className="sticky top-0 bg-slate-100 border-b border-slate-200 text-slate-600 text-[11px] uppercase tracking-wider">
                 <tr>
+                  <th className="py-2.5 px-3">Record ID</th>
                   <th className="py-2.5 px-3">Time</th>
-                  <th className="py-2.5 px-3">Seq</th>
                   <th className="py-2.5 px-3">CO (ppm)</th>
                   <th className="py-2.5 px-3">VOC (ppm)</th>
                   <th className="py-2.5 px-3">LPG (ppm)</th>
+                  <th className="py-2.5 px-3">Packet</th>
                   <th className="py-2.5 px-3">State</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 {logs.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-6 text-center text-slate-400">
+                    <td colSpan={7} className="py-6 text-center text-slate-400">
                       {isLoading ? 'Loading records from Supabase...' : 'No records match this filter.'}
                     </td>
                   </tr>
@@ -172,13 +177,18 @@ export const DataHistorySection: React.FC = () => {
                           isSelected ? 'bg-emerald-50/80 font-semibold' : 'hover:bg-slate-50'
                         }`}
                       >
-                        <td className="py-2.5 px-3 text-slate-900 whitespace-nowrap">
+                        <td className="py-2.5 px-3 text-slate-900 font-bold whitespace-nowrap">
+                          #{row.id}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap">
                           {new Date(row.created_at).toLocaleTimeString()}
                         </td>
-                        <td className="py-2.5 px-3 text-slate-500">#{row.seq_id}</td>
                         <td className="py-2.5 px-3 tabular-nums">{row.co_ppm}</td>
                         <td className="py-2.5 px-3 tabular-nums">{row.voc_ppm}</td>
                         <td className="py-2.5 px-3 tabular-nums">{row.lpg_ppm}</td>
+                        <td className="py-2.5 px-3 text-slate-400 text-[11px]">
+                          pkt #{row.seq_id}
+                        </td>
                         <td className="py-2.5 px-3">
                           <span className={`px-2 py-0.5 rounded-full text-[10px] border ${st.badgeClass}`}>
                             {st.label}

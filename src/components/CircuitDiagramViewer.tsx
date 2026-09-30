@@ -219,7 +219,7 @@ export const CircuitDiagramViewer: React.FC = () => {
     {
       id: 'microsd',
       name: 'MicroSD SPI Module',
-      type: 'Non-Volatile Black-Box Flight Recorder',
+      type: 'Non-Volatile Local Data Logger',
       voltage: '5V (on-board 3.3V regulator)',
       role: 'Logs every raw ADC sample, gas concentration, timestamp, and safety state to FAT32 microSD. Ensures zero telemetry loss during network drops.',
       x: 630,
@@ -355,13 +355,18 @@ export const CircuitDiagramViewer: React.FC = () => {
         <div className="lg:col-span-8 bg-[#070b14] rounded-2xl border border-slate-800 p-4 sm:p-6 shadow-xl relative overflow-hidden">
           
           {/* Schematic Title Block */}
-          <div className="flex items-center justify-between text-xs text-slate-400 pb-3 mb-3 border-b border-slate-800 font-mono">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400 pb-3 mb-3 border-b border-slate-800 font-mono">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
               <span className="text-white font-bold tracking-wider">DWG: SAFEBREATH-V3-SCH-REV3.0</span>
             </div>
-            <div className="text-[11px] text-slate-500">
-              CLICK COMPONENT TO INSPECT PINOUT
+            <div className="text-[11px] text-slate-400 flex items-center gap-2">
+              <span className="lg:hidden text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800">
+                ← Swipe / Drag Schematic →
+              </span>
+              <span className="hidden lg:inline text-slate-500">
+                CLICK COMPONENT TO INSPECT PINOUT
+              </span>
             </div>
           </div>
 

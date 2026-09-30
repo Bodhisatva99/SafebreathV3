@@ -16,7 +16,7 @@ export const LiveTelemetryExperience: React.FC = () => {
       const { data, error } = await supabase
         .from('sensor_logs')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
         .limit(20);
 
       if (error) {
@@ -137,34 +137,49 @@ export const LiveTelemetryExperience: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Realtime Supabase Status Ribbon */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
-        <div className="flex items-center gap-2.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
-          <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-800">
-            REAL HARDWARE TELEMETRY STREAM
-          </span>
-          <span className="text-slate-300">·</span>
-          <span className="text-xs font-mono text-emerald-800 font-semibold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1.5">
-            <Radio className="w-3 h-3 text-emerald-700 animate-pulse" />
-            <span>fleiawoctghecndjesdn.supabase.co · public.sensor_logs</span>
-          </span>
-        </div>
+      {/* Realtime Supabase Status Ribbon - Visually Distinct Live Metrology Feed */}
+      <div className="bg-gradient-to-r from-emerald-950/90 via-slate-900 to-slate-950 text-white rounded-2xl p-4 sm:p-5 border border-emerald-500/30 shadow-md space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-300">
+                  LIVE PHYSICAL HARDWARE STREAM
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  REAL-TIME EDGE TELEMETRY
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                Physical Prototype &gt; Arduino Nano ADC &gt; ESP32 Gateway &gt; Supabase Cloud
+              </div>
+            </div>
+          </div>
 
-        <div className="text-xs text-slate-500 font-mono flex items-center gap-3">
-          <span className="flex items-center gap-1">
-            <Server className="w-3.5 h-3.5 text-slate-400" />
-            <span>Session #{currentLog?.session_id || '---'}</span>
-          </span>
-          <span>·</span>
-          <span>Seq #{currentLog?.seq_id || '---'}</span>
-          <span>·</span>
-          <span>Age: {currentLog?.data_age_ms ?? '0'}ms</span>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-mono">
+            <div className="px-3 py-1.5 rounded-lg bg-emerald-900/40 border border-emerald-500/30 text-emerald-300 font-bold">
+              LATEST RECORD #{currentLog?.id || '1330'}
+            </div>
+            <div className="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-[11px]">
+              Packet #{currentLog?.seq_id ?? '---'}
+            </div>
+            <div className="px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 text-[11px] hidden md:block">
+              Session #{currentLog?.session_id ?? '---'}
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-400 text-[11px]">
+              <Radio className="w-3 h-3 text-emerald-400 animate-pulse" />
+              <span>{isRealtimeConnected ? 'WebSocket Live' : 'Polling Active'}</span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Main 5-Card Gas & Climate Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         
         {/* Carbon Monoxide */}
         <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4 flex flex-col justify-between hover:border-slate-300 transition-colors">

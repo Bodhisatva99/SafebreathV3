@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PageTab } from '../types';
+import { SafeBreathShieldSymbol } from '../components/SafeBreathLogo';
 import { 
   ShieldAlert, 
   Cpu, 
@@ -231,8 +232,8 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onSelectTab }) => {
         {/* The Solution */}
         <div className="rounded-xl border border-emerald-900/40 bg-emerald-950/10 p-6 sm:p-8 space-y-5">
           <div className="flex items-center gap-3 text-emerald-400">
-            <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-              <ShieldAlert className="w-5 h-5" />
+            <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <SafeBreathShieldSymbol size={24} />
             </div>
             <div>
               <span className="text-xs font-mono uppercase tracking-wider text-emerald-400/80">The Integrated Approach</span>

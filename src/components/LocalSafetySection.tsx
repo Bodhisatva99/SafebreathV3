@@ -19,7 +19,7 @@ export const LocalSafetySection: React.FC = () => {
         </h2>
 
         <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-          Cloud notifications are invaluable for off-site awareness, but in safety-critical atmospheric detection, a Wi-Fi drop, DNS hiccup, or router reboot cannot be allowed to silence a life-saving alarm. SafeBreath runs two completely independent operational loops.
+          Cloud notifications are invaluable for off-site awareness, but in safety-critical atmospheric detection, a Wi-Fi drop, DNS hiccup, or router reboot cannot be allowed to silence a local safety alarm. SafeBreath runs two completely independent operational loops.
         </p>
       </div>
 
@@ -32,7 +32,7 @@ export const LocalSafetySection: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400">
-                LOOP A: LOCAL LIFE-SAFETY LOOP
+                LOOP A: LOCAL SAFETY ALARM LOOP
               </span>
             </div>
             <span className="text-[11px] font-mono text-emerald-300 bg-emerald-950/90 px-2.5 py-0.5 rounded-full border border-emerald-800">
@@ -48,7 +48,7 @@ export const LocalSafetySection: React.FC = () => {
           </div>
 
           {/* Flow nodes */}
-          <div className="grid grid-cols-4 gap-2 pt-2 text-center text-xs font-mono">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 text-center text-xs font-mono">
             <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
               <div className="text-[10px] text-slate-500">STAGE 1</div>
               <div className="font-bold text-white">Sensor</div>
@@ -104,7 +104,7 @@ export const LocalSafetySection: React.FC = () => {
           </div>
 
           {/* Flow nodes */}
-          <div className="grid grid-cols-4 gap-2 pt-2 text-center text-xs font-mono">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 text-center text-xs font-mono">
             <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
               <div className="text-[10px] text-slate-500">STAGE 1</div>
               <div className="font-bold text-white">Event</div>

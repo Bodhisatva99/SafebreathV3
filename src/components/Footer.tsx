@@ -2,6 +2,7 @@ import React from 'react';
 import { NavSection } from '../types';
 import { ShieldAlert, ArrowUpRight } from 'lucide-react';
 import { DownloadAppButton } from './DownloadAppButton';
+import { SafeBreathLogo } from './SafeBreathLogo';
 
 interface FooterProps {
   onNavigate: (section: NavSection) => void;
@@ -9,17 +10,18 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   return (
-    <footer className="border-t border-slate-200 bg-white text-slate-500 text-xs py-14 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
-        <div className="space-y-4 md:col-span-1">
-          <div className="flex items-center gap-2.5 text-slate-900 font-bold text-base">
-            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center border border-emerald-200">
-              <ShieldAlert className="w-4 h-4" />
-            </div>
-            <span>SafeBreath</span>
-          </div>
+    <footer className="border-t border-slate-200 bg-white text-slate-500 text-xs py-12 sm:py-14 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 mb-12">
+        <div className="space-y-4 sm:col-span-2 lg:col-span-1">
+          <button 
+            onClick={() => onNavigate('product')}
+            className="text-left focus:outline-none focus:ring-2 focus:ring-emerald-500/20 rounded-lg p-0.5 transition-opacity hover:opacity-90 block"
+            aria-label="SafeBreath Home"
+          >
+            <SafeBreathLogo width={155} variant="light" className="w-[145px] h-auto" />
+          </button>
           <p className="text-slate-600 text-xs leading-relaxed">
-            Smart Multi-Gas Detection & Environmental Safety System. A low-cost connected hardware platform uniting physical multi-gas sensing, autonomous local alarms, offline flight recording, and cloud alerts.
+            Smart Multi-Gas Detection & Environmental Safety System. A low-cost connected hardware platform uniting physical multi-gas sensing, autonomous local alarms, offline local logging, and cloud alerts.
           </p>
           <div className="text-[11px] font-mono text-slate-400">
             Open Atmospheric Metrology & Embedded Research
@@ -106,7 +108,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             </li>
             <li>
               <button onClick={() => onNavigate('data')} className="hover:text-emerald-800 transition-colors">
-                Historical Incident Forensics Log
+                Historical Telemetry & Alert History
               </button>
             </li>
           </ul>

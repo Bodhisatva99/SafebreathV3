@@ -51,10 +51,10 @@ export const TechnicalSpecsSection: React.FC = () => {
       </div>
 
       {/* Tab Switcher */}
-      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200 w-fit">
+      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200 w-full sm:w-fit">
         <button
           onClick={() => setActiveTab('calibration')}
-          className={`px-4 py-2 rounded-xl text-xs font-medium transition-all ${
+          className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-medium transition-all min-h-[38px] ${
             activeTab === 'calibration' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -62,7 +62,7 @@ export const TechnicalSpecsSection: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab('controllers')}
-          className={`px-4 py-2 rounded-xl text-xs font-medium transition-all ${
+          className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-medium transition-all min-h-[38px] ${
             activeTab === 'controllers' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -70,7 +70,7 @@ export const TechnicalSpecsSection: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab('packet')}
-          className={`px-4 py-2 rounded-xl text-xs font-medium transition-all ${
+          className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-medium transition-all min-h-[38px] ${
             activeTab === 'packet' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -78,7 +78,7 @@ export const TechnicalSpecsSection: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab('diagnostics')}
-          className={`px-4 py-2 rounded-xl text-xs font-medium transition-all ${
+          className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-medium transition-all min-h-[38px] ${
             activeTab === 'diagnostics' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -86,11 +86,11 @@ export const TechnicalSpecsSection: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab('bom')}
-          className={`px-4 py-2 rounded-xl text-xs font-medium transition-all ${
+          className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-medium transition-all min-h-[38px] ${
             activeTab === 'bom' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          Bill of Materials ($42.50)
+          Bill of Materials (${totalBOM.toFixed(2)})
         </button>
       </div>
 

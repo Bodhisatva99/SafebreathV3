@@ -129,7 +129,7 @@ export const BILL_OF_MATERIALS: BOMItem[] = [
     subsystem: "Gateway & Display",
     partNumber: "SanDisk Ultra 16GB",
     estimatedCostUsd: 3.80,
-    purpose: "Non-volatile local telemetry persistence, offline black-box flight recorder for post-incident audits"
+    purpose: "Non-volatile local telemetry persistence and offline event logging"
   },
   {
     component: "5V 2.5A Buck Regulator & Passives",
@@ -172,7 +172,7 @@ export const CONTROLLER_ARCHITECTURE_ROLES = [
     role: "Gateway, Storage & Cloud Synchronization Subsystem",
     frequency: "Wi-Fi 802.11 b/g/n + SPI MicroSD Bus",
     responsibilities: [
-      "MicroSD local black-box data logging in CSV format for offline forensic analysis",
+      "MicroSD local data logging in CSV format for offline safety analysis",
       "Wi-Fi connection management with automated reconnection and packet retry queues",
       "Secure HTTPS/REST or Supabase Realtime ingestion channel for environmental telemetry",
       "Triggers remote notification dispatch (Firebase Cloud Messaging) for off-site awareness"
@@ -295,11 +295,11 @@ export const HARDWARE_COMPONENTS = [
   {
     id: "microsd",
     name: "MicroSD Card (16GB)",
-    title: "Black-Box Local Flight Recorder",
+    title: "Non-Volatile Local Data Logger",
     category: "storage",
     role: "Retains circular CSV telemetry logs locally so no data is lost during internet drops or power outages.",
     dataProduced: "CSV records: timestamp, sequence, gas PPM, temperature, humidity, safety state, CRC",
-    dataDestination: "Persistent non-volatile flash storage for forensic incident auditing",
+    dataDestination: "Persistent non-volatile flash storage for historical trend auditing",
     busType: "SPI Bus Interface",
     specs: "FAT32 file system · > 18 months continuous data capacity · Sector-buffered writes"
   }

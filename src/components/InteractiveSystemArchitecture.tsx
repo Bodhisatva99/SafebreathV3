@@ -62,7 +62,7 @@ export const InteractiveSystemArchitecture: React.FC = () => {
       id: "gateway",
       number: "05",
       name: "ESP32-CAM Gateway & Storage",
-      subtitle: "Wi-Fi & FAT32 Black-Box Logger",
+      subtitle: "Wi-Fi & FAT32 Local Logger",
       desc: "Operates as a communications gateway completely decoupled from local life-safety timing. If the internet or Wi-Fi drops, it stores records into a circular MicroSD CSV buffer and queues cloud dispatches until connectivity returns.",
       metrics: ["802.11 b/g/n 2.4 GHz Wi-Fi Stack", "MicroSD Class 10 FAT32 CSV Logging", "Store-and-Forward Retry Buffer", "Non-Blocking Serial Bridge"],
       icon: <HardDrive className="w-5 h-5 text-indigo-600" />,
@@ -73,8 +73,8 @@ export const InteractiveSystemArchitecture: React.FC = () => {
       number: "06",
       name: "Supabase Cloud Persistence",
       subtitle: "Managed PostgreSQL Telemetry & Audit",
-      desc: "Ingests environmental data, sequence counters, and alarm events. Provides time-series queries for post-incident audits and triggers automated push dispatch via edge functions.",
-      metrics: ["PostgreSQL Row-Level Security", "Realtime WebSockets Stream", "Incident Post-Mortem Logging", "Fleet Multi-Device Management"],
+      desc: "Ingests environmental data, sequence counters, and alarm events. Provides time-series queries for historical trend audits and triggers automated push dispatch via edge functions.",
+      metrics: ["PostgreSQL Row-Level Security", "Realtime WebSockets Stream", "Historical Telemetry Persistence", "Fleet Multi-Device Management"],
       icon: <Database className="w-5 h-5 text-emerald-700" />,
       delayMs: "~150 ms Ingest"
     },
@@ -95,7 +95,13 @@ export const InteractiveSystemArchitecture: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Top Architecture Flow Ribbon */}
-      <div className="bg-slate-50/80 rounded-2xl border border-slate-200 p-4 sm:p-6 overflow-x-auto">
+      <div className="bg-slate-50/80 rounded-2xl border border-slate-200 p-3 sm:p-6 overflow-x-auto">
+        <div className="text-[10px] font-mono text-slate-500 sm:hidden pb-2 flex items-center justify-between">
+          <span>7-Stage Pipeline</span>
+          <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60 font-semibold">
+            ← Swipe Stages →
+          </span>
+        </div>
         <div className="flex items-center min-w-[700px] justify-between relative">
           {layers.map((layer, idx) => {
             const isSelected = activeLayer === idx;

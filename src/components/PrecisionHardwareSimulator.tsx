@@ -22,6 +22,7 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import { SafetyState } from '../types';
+import { SafeBreathShieldSymbol } from './SafeBreathLogo';
 
 export const PrecisionHardwareSimulator: React.FC = () => {
   // Input parameters
@@ -205,17 +206,17 @@ export const PrecisionHardwareSimulator: React.FC = () => {
       {/* Instrument Chassis Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-200">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500">
-              PRECISION TEST BENCH INSTRUMENT
+          <div className="flex items-center gap-2.5">
+            <SafeBreathShieldSymbol size={22} />
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-800 bg-amber-100/90 px-2.5 py-0.5 rounded-full border border-amber-300">
+              SYNTHETIC TEST BENCH & SIMULATION ENVIRONMENT
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
             SafeBreath Hardware Emulation Console
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mt-1">
-            Real-time interactive hardware workbench simulating 10-bit analog oversampling, hysteresis evaluation, SSD1306 OLED rendering, 85dB acoustic buzzer synthesis, and store-and-forward telemetry.
+            Interactive virtual workbench simulating 10-bit analog oversampling, hysteresis evaluation, SSD1306 OLED rendering, 85dB acoustic buzzer synthesis, and store-and-forward telemetry without altering live physical sensors.
           </p>
         </div>
 
@@ -296,11 +297,11 @@ export const PrecisionHardwareSimulator: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Console Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* Main Console Layout: Optimized for Mobile, Tablet Dual-Pane, and Desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
         
-        {/* Left: Input Control Knobs (4 Cols) */}
-        <div className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 p-6 space-y-6 shadow-sm">
+        {/* Left: Input Control Knobs (Mobile: 1 col, Tablet: 1 col, Desktop: 4 Cols) */}
+        <div className="md:col-span-1 lg:col-span-4 bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 space-y-6 shadow-sm">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 text-xs font-mono text-slate-500">
             <span className="font-semibold text-slate-900 uppercase">Input Variable Knobs</span>
             <span>2 Hz Sampling</span>
@@ -439,14 +440,14 @@ export const PrecisionHardwareSimulator: React.FC = () => {
           </div>
         </div>
 
-        {/* Center: Real Physical Display & Alarm Core (5 Cols) */}
-        <div className="lg:col-span-5 space-y-6">
+        {/* Center: Real Physical Display & Alarm Core (Mobile: 1 col, Tablet: 1 col, Desktop: 5 Cols) */}
+        <div className="md:col-span-1 lg:col-span-5 space-y-6">
           
           {/* Authentic Monochrome OLED SSD1306 Display */}
           <div className="bg-slate-900 rounded-2xl border-4 border-slate-800 p-6 space-y-3 shadow-xl">
             <div className="flex items-center justify-between text-xs font-mono text-slate-400 pb-2 border-b border-slate-800">
               <span className="flex items-center gap-2 text-cyan-400 font-bold">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <SafeBreathShieldSymbol size={16} />
                 0.96" SSD1306 OLED (128x64)
               </span>
               <span>I2C 0x3C</span>
@@ -551,8 +552,8 @@ export const PrecisionHardwareSimulator: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: MicroSD Log & Cloud / Companion Push (3 Cols) */}
-        <div className="lg:col-span-3 space-y-6">
+        {/* Right: MicroSD Log & Cloud / Companion Push (Mobile: 1 col, Tablet: spans 2 cols, Desktop: 3 Cols) */}
+        <div className="md:col-span-2 lg:col-span-3 space-y-6">
           
           {/* Companion Mobile Notification Banner Preview */}
           <div className="space-y-2">
@@ -563,8 +564,8 @@ export const PrecisionHardwareSimulator: React.FC = () => {
             {isAlarmActive ? (
               <div className="bg-white rounded-2xl border-2 border-rose-300 p-4 shadow-md space-y-2 animate-bounce">
                 <div className="flex items-center justify-between text-[11px] font-mono text-slate-500">
-                  <span className="flex items-center gap-1 font-bold text-rose-600">
-                    <ShieldAlert className="w-3.5 h-3.5" />
+                  <span className="flex items-center gap-1.5 font-bold text-rose-600">
+                    <SafeBreathShieldSymbol size={15} />
                     SafeBreath Alert
                   </span>
                   <span>Now</span>

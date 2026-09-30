@@ -16,6 +16,7 @@ import {
   WifiOff
 } from 'lucide-react';
 import { DownloadAppButton } from '../components/DownloadAppButton';
+import { SafeBreathAndroidAppIcon } from '../components/SafeBreathLogo';
 
 interface CloudAndAppPageProps {
   onSelectTab: (tab: PageTab) => void;
@@ -216,19 +217,19 @@ export const CloudAndAppPage: React.FC<CloudAndAppPageProps> = ({ onSelectTab })
         </div>
       </section>
 
-      {/* Offline Resilience & Flight Recorder */}
+      {/* Offline Resilience & Local Event Logging */}
       <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 sm:p-10 space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-7 space-y-4">
             <div className="inline-flex items-center gap-2 text-xs font-mono text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded">
               <HardDrive className="w-3.5 h-3.5" />
-              <span>OFFLINE FLIGHT RECORDER</span>
+              <span>OFFLINE LOCAL EVENT LOGGER</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-white">
               Local MicroSD Resilience & Store-and-Forward
             </h2>
             <p className="text-slate-300 text-sm leading-relaxed">
-              When internet connectivity drops or power fluctuations knock out residential Wi-Fi, SafeBreath switches into offline black-box flight recorder mode:
+              When internet connectivity drops or power fluctuations disrupt residential Wi-Fi, SafeBreath switches into autonomous offline local logging mode:
             </p>
             
             <div className="space-y-3 pt-2 text-xs text-slate-300">
@@ -242,7 +243,7 @@ export const CloudAndAppPage: React.FC<CloudAndAppPageProps> = ({ onSelectTab })
               </div>
               <div className="flex items-start gap-2.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
-                <span><strong>Forensic Post-Mortem:</strong> In the event of a fire, explosion, or chemical leak investigation, the physical MicroSD card can be extracted and analyzed directly.</span>
+                <span><strong>Offline Data Audit:</strong> In the event of a power outage or disconnected period, the physical MicroSD card can be extracted and analyzed directly in CSV format.</span>
               </div>
             </div>
           </div>
@@ -271,9 +272,12 @@ export const CloudAndAppPage: React.FC<CloudAndAppPageProps> = ({ onSelectTab })
       {/* Companion Android Application Role */}
       <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-6 sm:p-10 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <div>
-            <div className="text-xs font-mono text-purple-400 uppercase tracking-wider">Remote Client</div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mt-1">SafeBreath Companion Android Application</h2>
+          <div className="flex items-center gap-4">
+            <SafeBreathAndroidAppIcon size={52} className="shadow-lg border border-purple-500/30" />
+            <div>
+              <div className="text-xs font-mono text-purple-400 uppercase tracking-wider">Remote Client</div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mt-0.5">SafeBreath Companion Android Application</h2>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs font-mono text-slate-400 hidden sm:inline">Android SDK 34 · Jetpack Compose</span>
@@ -310,7 +314,7 @@ export const CloudAndAppPage: React.FC<CloudAndAppPageProps> = ({ onSelectTab })
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
               <Server className="w-4 h-4" />
             </div>
-            <h4 className="text-sm font-bold text-white">Historical Incident Trends</h4>
+            <h4 className="text-sm font-bold text-white">Historical Telemetry Trends</h4>
             <p className="text-xs text-slate-400 leading-relaxed">
               Allows users to zoom into previous days or hours to diagnose gas buildup curves, heater anomalies, or periodic ventilation failures.
             </p>

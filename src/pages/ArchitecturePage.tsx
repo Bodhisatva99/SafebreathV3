@@ -237,6 +237,43 @@ export const ArchitecturePage: React.FC<ArchitecturePageProps> = ({ onSelectTab 
         </div>
       </section>
 
+      {/* Architectural Overview & Net Interconnect Summary */}
+      <section className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+          <div>
+            <div className="text-xs font-mono text-emerald-400 uppercase tracking-wider">Electrical Topography</div>
+            <h2 className="text-2xl font-bold text-white mt-1">System Interconnect Overview</h2>
+          </div>
+          <span className="text-xs font-mono text-slate-400">High-level schematic summary prior to wire-level CAD</span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-2">
+            <span className="text-xs font-mono text-emerald-400 font-bold">01 · POWER & GROUND RAILS</span>
+            <h3 className="text-sm font-bold text-white">Regulated +5V & 3.3V Common Rail</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Unified 5.0V bus powers sensor heating elements (MQ-135, MQ-6), Arduino Nano Vin, and ESP32-CAM 5V pin. Shared common ground plane prevents ADC reference offset jitter.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-2">
+            <span className="text-xs font-mono text-sky-400 font-bold">02 · ANALOG & DIGITAL INPUTS</span>
+            <h3 className="text-sm font-bold text-white">4 Dedicated Atmospheric Channels</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              A0 (MQ-135 analog voltage), A1 (MQ-6 analog voltage), D2 (DHT11 1-wire data with 4.7 kΩ pull-up), and D3/D4 (ZE07-CO UART serial protocol at 9600 baud).
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-2">
+            <span className="text-xs font-mono text-amber-400 font-bold">03 · ACTUATION & GATEWAY</span>
+            <h3 className="text-sm font-bold text-white">Zero-Latency Alarm & Cloud Bridge</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Pin D7 drives the 85dB active piezo buzzer directly in &lt;10ms; I2C (A4/A5) refreshes the SSD1306 OLED; Hardware TX streams framed packets to the ESP32-CAM gateway.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Official SafeBreath V3 Circuit Diagram & Schematic Visualizer */}
       <section className="space-y-4">
         <CircuitDiagramViewer />
