@@ -41,4 +41,4 @@ export interface SensorLogRow {
   dropped_events?: number;
 }
 
-export const APP_DOWNLOAD_URL = "https://github.com/Bodhisatva99/SafebreathV3/releases/download/V3.0.0/SafeBreathV3.apk";
+export const APP_DOWNLOAD_URL = "https://github.com/Bodhisatva99/SafebreathV3/releases/latest/download/SafeBreathV3.apk";
