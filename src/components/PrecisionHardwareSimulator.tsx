@@ -450,13 +450,13 @@ export const PrecisionHardwareSimulator: React.FC = () => {
                 <SafeBreathShieldSymbol size={16} />
                 0.96" SSD1306 OLED (128x64)
               </span>
-              <span>I2C 0x3C</span>
+              <span>I2C 0x3C (GPIO 4/15)</span>
             </div>
 
             {/* Simulated monochrome display glass */}
             <div className="bg-black rounded-xl p-4 font-mono text-xs text-cyan-300 min-h-[190px] flex flex-col justify-between border-2 border-slate-950">
               <div className="flex items-center justify-between border-b border-cyan-500/30 pb-1 text-[11px]">
-                <span className="font-bold tracking-wider">SAFEBREATH v1.2</span>
+                <span className="font-bold tracking-wider">SAFEBREATH Rev 2.8f</span>
                 <span className="text-[10px] text-cyan-400">WIFI:OK SD:OK</span>
               </div>
 
@@ -530,7 +530,7 @@ export const PrecisionHardwareSimulator: React.FC = () => {
                   <Volume2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Autonomous Alarm Unit</div>
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500">Autonomous Alarm Unit (ESP32 GPIO 13)</div>
                   <h4 className="font-bold text-sm sm:text-base">
                     {isAlarmActive ? '85 dB SIREN ACTIVATED (2.4 kHz PWM)' : isWarnActive ? 'INTERMITTENT WARNING BEEP' : 'PIEZO BUZZER SILENT'}
                   </h4>

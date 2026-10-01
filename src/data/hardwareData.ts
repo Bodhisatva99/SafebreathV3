@@ -3,8 +3,8 @@ import { BOMItem } from '../types';
 export const SYSTEM_SPECS = {
   name: "SAFE BREATH",
   tagline: "Smart Multi-Gas Detection & Air Quality Monitoring System",
-  descriptor: "A low-cost, connected atmospheric safety system for detecting hazardous gases and monitoring environmental conditions in real time.",
-  version: "Hardware Prototype v1.2",
+  descriptor: "A connected atmospheric safety and current-monitoring system for detecting hazardous gases and monitoring environmental conditions in real time.",
+  version: "Hardware Prototype Rev 2.8f",
   firmwareBaseline: {
     mq135BaselineADC: 49.81,
     mq6BaselineADC: 14.82,
@@ -80,56 +80,63 @@ export const BILL_OF_MATERIALS: BOMItem[] = [
     subsystem: "Gateway & Display",
     partNumber: "AI-Thinker ESP32-CAM",
     estimatedCostUsd: 5.50,
-    purpose: "Wireless gateway & offline logger: 802.11 b/g/n Wi-Fi, MicroSD FAT32 circular log buffer, Supabase sync"
+    purpose: "Wireless gateway & offline logger: 802.11 b/g/n Wi-Fi, MicroSD SD_MMC circular log buffer, Supabase sync (Camera sensor disabled in Rev 2.8f firmware)"
   },
   {
     component: "ZE07-CO Electrochemical Module",
     subsystem: "Sensors",
     partNumber: "Winsen ZE07-CO",
     estimatedCostUsd: 14.50,
-    purpose: "High-precision electrochemical CO sensor with digital UART output (0–500 ppm, 0.1 ppm resolution)"
+    purpose: "High-precision electrochemical CO sensor with digital UART output connected directly to ESP32 (GPIO 16/17)"
   },
   {
     component: "MQ-135 Air Quality Sensor",
     subsystem: "Sensors",
     partNumber: "MQ-135 SnO2 Module",
     estimatedCostUsd: 2.10,
-    purpose: "Broadband volatile organic compounds (VOC), NH3, NOx, alcohol, benzene, smoke detection"
+    purpose: "Broadband volatile organic compounds (VOC), NH3, NOx, alcohol, benzene, smoke detection on Nano A0"
   },
   {
     component: "MQ-6 Combustible Gas Sensor",
     subsystem: "Sensors",
     partNumber: "MQ-6 SnO2 Module",
     estimatedCostUsd: 2.20,
-    purpose: "Liquefied Petroleum Gas (LPG), isobutane, propane and natural gas detection"
+    purpose: "Liquefied Petroleum Gas (LPG), isobutane, propane and natural gas detection on Nano A1"
   },
   {
     component: "DHT11 Climate Sensor",
     subsystem: "Sensors",
     partNumber: "DHT11 Single-Bus Digital",
     estimatedCostUsd: 1.40,
-    purpose: "Ambient temperature (0–50°C) and relative humidity (20–90% RH) environmental compensation"
+    purpose: "Ambient temperature and relative humidity environmental compensation on Nano D2"
+  },
+  {
+    component: "Dual CT Current Sensors (CT1 & CT2)",
+    subsystem: "Sensors",
+    partNumber: "SCT-013 Split-Core / ACS712",
+    estimatedCostUsd: 5.80,
+    purpose: "Current/power monitoring channels 1 & 2 sampled on ESP32 ADC inputs (GPIO 33 and GPIO 32)"
   },
   {
     component: "0.96\" I2C OLED Display",
     subsystem: "Gateway & Display",
     partNumber: "SSD1306 128x64 White",
     estimatedCostUsd: 2.60,
-    purpose: "Immediate at-a-glance physical telemetry: real-time gas levels, warning states, and diagnostic status"
+    purpose: "Immediate physical telemetry on ESP32 custom I2C pins (SDA: GPIO 4, SCL: GPIO 15)"
   },
   {
     component: "Active Piezo Buzzer 5V",
     subsystem: "Gateway & Display",
     partNumber: "TMB12A05 85dB",
     estimatedCostUsd: 0.60,
-    purpose: "Autonomous physical acoustic alarm, pulses at 2.4 kHz with distinct warning/danger sound cadences"
+    purpose: "Autonomous physical acoustic alarm driven directly by ESP32 (GPIO 13)"
   },
   {
     component: "MicroSD Card 16GB Class 10",
     subsystem: "Gateway & Display",
     partNumber: "SanDisk Ultra 16GB",
     estimatedCostUsd: 3.80,
-    purpose: "Non-volatile local telemetry persistence and offline event logging"
+    purpose: "Non-volatile local telemetry persistence via ESP32-CAM onboard SD_MMC bus"
   },
   {
     component: "5V 2.5A Buck Regulator & Passives",
@@ -142,54 +149,63 @@ export const BILL_OF_MATERIALS: BOMItem[] = [
 
 export const CONTROLLER_ARCHITECTURE_ROLES = [
   {
+    controller: "ESP32 DevKit V1 (Dev Master)",
+    role: "Central Safety & Master Control Subsystem",
+    frequency: "Dual-Core 240 MHz (Core 1: Safety Engine / Core 0: I/O & UI)",
+    responsibilities: [
+      "Hardware UART (GPIO 16 RX / GPIO 17 TX) direct stream from Winsen ZE07-CO electrochemical module",
+      "Hardware UART (GPIO 23 RX / GPIO 22 TX) reception from Arduino Nano telemetry bridge",
+      "I2C master on GPIO 4 (SDA) / GPIO 15 (SCL) driving SSD1306 128x64 real-time OLED",
+      "Active acoustic alarm siren output directly driven on GPIO 13 (PWM/digital)",
+      "Dual analog current telemetry: CT1 sensor on GPIO 33, CT2 sensor on GPIO 32",
+      "Master state engine: evaluates SAFE / WARNING / DANGER with hysteresis and triggers local alerts"
+    ],
+    whySeparate: "Keeps all life-safety critical decision loops, display rendering, and immediate siren alerts fully local with zero reliance on cloud latency or network reliability."
+  },
+  {
     controller: "Arduino Nano",
-    role: "Dedicated Sensor Acquisition Subsystem",
-    frequency: "100 Hz ADC loop, averaged to 2 Hz",
+    role: "Dedicated Analog & 1-Wire Acquisition Subsystem",
+    frequency: "ATmega328P 16 MHz, 100 Hz ADC loop averaged to 2 Hz",
     responsibilities: [
-      "Continuous analog reading of MQ-135 and MQ-6 gas sensors via 10-bit ADC",
-      "Single-wire timing decoding for DHT11 temperature and humidity frame",
-      "Moving average digital filter to suppress electrical noise and heater switching spikes",
-      "Packetizes raw sensor measurements with sequence IDs and checksums into a UART packet stream"
+      "Continuous analog reading of MQ-135 VOC sensor on pin A0",
+      "Continuous analog reading of MQ-6 LPG/combustible gas sensor on pin A1",
+      "Single-wire pulse-timing decoding for DHT11 climate frame on digital pin D2",
+      "Serial packetizer: streams validated sensor frames to ESP32 Dev Master via Hardware Serial (D0/D1)"
     ],
-    whySeparate: "Prevents high-priority Wi-Fi network interrupts or display rendering routines from disrupting microsecond-sensitive DHT11 timing and analog ADC conversions."
+    whySeparate: "Prevents display routines or communication protocols from disrupting microsecond-sensitive DHT11 timing and analog ADC conversions."
   },
   {
-    controller: "ESP32 DevKit",
-    role: "Central Safety & Local Control Subsystem",
-    frequency: "Dual-Core 240 MHz, Core 1 Safety / Core 0 UI",
+    controller: "ESP32-CAM (CAM Gateway)",
+    role: "Cloud Gateway & Offline MicroSD Persistence Subsystem",
+    frequency: "Wi-Fi 802.11 b/g/n + SD_MMC Bus (Firmware Rev 2.8f)",
     responsibilities: [
-      "Receives and validates incoming sensor packets from Arduino Nano over HardwareSerial",
-      "Direct UART interface to ZE07-CO electrochemical module",
-      "Evaluates multi-gas safety state machine (SAFE, WARNING, DANGER) with threshold hysteresis",
-      "Autonomous hardware driver for 85 dB Piezo Buzzer (immediate zero-latency alarm)",
-      "Renders dynamic telemetry screens on the 128x64 monochrome OLED display",
-      "Maintains sensor health monitors: checks for stale data, disconnection, and baseline drift"
+      "Interconnects with ESP32 Dev Master via Hardware Serial UART bridge",
+      "Circular local telemetry logging to onboard MicroSD slot via SD_MMC",
+      "Manages internal Wi-Fi stack and cloud synchronization to Supabase and notification services",
+      "Camera module disabled in this Rev 2.8f firmware to dedicate 100% processing to reliable logging"
     ],
-    whySeparate: "Keeps life-safety critical decision loops completely isolated from network failures, cloud latency, or Wi-Fi handshake drops."
-  },
-  {
-    controller: "ESP32-CAM",
-    role: "Gateway, Storage & Cloud Synchronization Subsystem",
-    frequency: "Wi-Fi 802.11 b/g/n + SPI MicroSD Bus",
-    responsibilities: [
-      "MicroSD local data logging in CSV format for offline safety analysis",
-      "Wi-Fi connection management with automated reconnection and packet retry queues",
-      "Secure HTTPS/REST or Supabase Realtime ingestion channel for environmental telemetry",
-      "Triggers remote notification dispatch (Firebase Cloud Messaging) for off-site awareness"
-    ],
-    whySeparate: "If the local router loses power or internet connectivity drops, the gateway queues data while the local alarm and OLED continue protecting nearby occupants without hesitation."
+    whySeparate: "Ensures that even if local Wi-Fi router or cloud disconnects, the offline buffer logs to MicroSD while local master ESP32 continues sounding sirens and updating OLED."
   }
 ];
 
 export const HARDWARE_PINS = [
-  { bus: "UART1 (Nano -> ESP32)", source: "Arduino Nano TX (D1)", destination: "ESP32 RX2 (GPIO16)", purpose: "Sensor raw telemetry packet transmission (9600 baud, 8N1)" },
-  { bus: "UART2 (ZE07 -> ESP32)", source: "ZE07-CO TX", destination: "ESP32 RX1 (GPIO18)", purpose: "Electrochemical digital CO concentration stream (9600 baud)" },
-  { bus: "I2C Bus", source: "ESP32 GPIO21 (SDA) / GPIO22 (SCL)", destination: "SSD1306 OLED", purpose: "128x64 display refresh at 10 FPS" },
-  { bus: "GPIO PWM", source: "ESP32 GPIO23", destination: "Piezo Buzzer Transistor Driver", purpose: "Acoustic alarm trigger (2.4 kHz PWM, non-blocking)" },
-  { bus: "Analog In", source: "MQ-135 Vout", destination: "Arduino Nano A0", purpose: "VOC concentration voltage reading across 1.0 kΩ RL" },
-  { bus: "Analog In", source: "MQ-6 Vout", destination: "Arduino Nano A1", purpose: "LPG concentration voltage reading across 1.0 kΩ RL" },
-  { bus: "1-Wire Digital", source: "DHT11 Data", destination: "Arduino Nano D2", purpose: "Temperature/Humidity 40-bit pulse width stream" },
-  { bus: "SPI Bus", source: "ESP32-CAM HSPI", destination: "Onboard MicroSD Slot", purpose: "FAT32 file logging (/logs/safebreath_YYYYMMDD.csv)" }
+  { board: "ESP32 DevKit V1 / Dev Master", function: "OLED SDA", pin: "GPIO 4", connection: "OLED SDA", bus: "I2C Data", purpose: "SSD1306 Display serial data line" },
+  { board: "ESP32 DevKit V1 / Dev Master", function: "OLED SCL", pin: "GPIO 15", connection: "OLED SCL", bus: "I2C Clock", purpose: "SSD1306 Display serial clock line" },
+  { board: "ESP32 DevKit V1 / Dev Master", function: "Buzzer", pin: "GPIO 13", connection: "Buzzer input/+", bus: "Digital / PWM", purpose: "Active piezo siren emergency sounder" },
+  { board: "ESP32 DevKit V1 / Dev Master", function: "CT1", pin: "GPIO 33", connection: "CT/current sensor 1", bus: "ADC Input", purpose: "Current transformer channel 1 mains monitoring" },
+  { board: "ESP32 DevKit V1 / Dev Master", function: "CT2", pin: "GPIO 32", connection: "CT/current sensor 2", bus: "ADC Input", purpose: "Current transformer channel 2 equipment monitoring" },
+  { board: "ESP32 DevKit V1 / Dev Master", function: "Nano UART RX", pin: "GPIO 23", connection: "Nano TX (D1)", bus: "Hardware UART", purpose: "Receives raw sensor packets from Arduino Nano" },
+  { board: "ESP32 DevKit V1 / Dev Master", function: "Nano UART TX", pin: "GPIO 22", connection: "Nano RX (D0)", bus: "Hardware UART", purpose: "Transmits commands & sync to Arduino Nano" },
+  { board: "ESP32 DevKit V1 / Dev Master", function: "ZE07-CO UART RX", pin: "GPIO 16", connection: "ZE07 TX", bus: "Hardware UART2", purpose: "Receives calibrated CO digital concentration" },
+  { board: "ESP32 DevKit V1 / Dev Master", function: "ZE07-CO UART TX", pin: "GPIO 17", connection: "ZE07 RX", bus: "Hardware UART2", purpose: "Transmits query/mode commands to ZE07 module" },
+  { board: "Arduino Nano", function: "MQ-135 analog", pin: "A0", connection: "MQ-135 AO", bus: "Analog In", purpose: "VOC concentration voltage reading (0–5V)" },
+  { board: "Arduino Nano", function: "MQ-6 analog", pin: "A1", connection: "MQ-6 AO", bus: "Analog In", purpose: "LPG concentration voltage reading (0–5V)" },
+  { board: "Arduino Nano", function: "DHT11 data", pin: "D2", connection: "DHT11 DATA", bus: "1-Wire Digital", purpose: "Ambient temperature and humidity pulse stream" },
+  { board: "Arduino Nano", function: "UART", pin: "Hardware Serial (D0/D1)", connection: "ESP32 connection (TX->GPIO23, RX<-GPIO22)", bus: "Hardware UART", purpose: "Dedicated packet bridge to ESP32 Dev Master" },
+  { board: "ESP32-CAM / CAM Gateway", function: "Dev UART", pin: "Hardware Serial", connection: "ESP32 Dev Master", bus: "Hardware UART", purpose: "Telemetry bridge from ESP32 master to gateway" },
+  { board: "ESP32-CAM / CAM Gateway", function: "microSD", pin: "SD_MMC", connection: "ESP32-CAM onboard SD interface", bus: "SD_MMC Bus", purpose: "High-speed circular CSV local logging" },
+  { board: "ESP32-CAM / CAM Gateway", function: "Wi-Fi", pin: "Internal", connection: "No external GPIO", bus: "802.11 b/g/n RF", purpose: "Supabase cloud sync & remote notifications" },
+  { board: "ESP32-CAM / CAM Gateway", function: "Camera", pin: "Not used in Rev 2.8f", connection: "—", bus: "Disabled", purpose: "Sensor power optimization in Rev 2.8f" }
 ];
 
 export const HARDWARE_COMPONENTS = [
@@ -200,8 +216,8 @@ export const HARDWARE_COMPONENTS = [
     category: "sensor",
     role: "Monitors toxic, odorless CO gas via catalytic oxidation on an electrochemical cell.",
     dataProduced: "Calibrated 0–500 ppm digital concentration stream (0.1 ppm resolution)",
-    dataDestination: "Direct UART link to ESP32 DevKit RX1 (GPIO18)",
-    busType: "UART (9600 Baud, 8N1)",
+    dataDestination: "Direct UART link to ESP32 Dev Master RX (GPIO 16) / TX (GPIO 17)",
+    busType: "UART2 (9600 Baud, 8N1)",
     specs: "Response time < 30s · Working range 0–500 ppm · Low power draw (< 5mA)"
   },
   {
@@ -238,36 +254,47 @@ export const HARDWARE_COMPONENTS = [
     specs: "0–50 °C (±2 °C) · 20–90% RH (±5%) · 1 Hz sampling cycle"
   },
   {
+    id: "ct-sensors",
+    name: "CT1 & CT2 Current Sensors",
+    title: "Dual Current Transformers (CT/Load)",
+    category: "sensor",
+    role: "Monitors electrical current draw, ventilation blower status, and equipment loads for comprehensive site safety.",
+    dataProduced: "Analog AC current waveform proportional to conductor amperes",
+    dataDestination: "ESP32 Dev Master ADC Inputs: CT1 on GPIO 33, CT2 on GPIO 32",
+    busType: "Dual Analog ADC (0–3.3V)",
+    specs: "Galvanically isolated non-invasive CT clamp / 0–30A detection / Fast ADC sampling"
+  },
+  {
     id: "arduino-nano",
     name: "Arduino Nano V3",
     title: "Dedicated Sensor Acquisition Controller",
     category: "controller",
-    role: "Executes continuous 100 Hz ADC oversampling, moving-average filtering, and single-wire timing.",
+    role: "Executes continuous 100 Hz ADC oversampling of MQ-135/MQ-6 and single-wire timing for DHT11.",
     dataProduced: "Validated 16-byte structured binary telemetry packet with CRC16 checksum",
-    dataDestination: "ESP32 DevKit RX2 (GPIO16) via hardware UART",
+    dataDestination: "ESP32 Dev Master via Hardware Serial D0/D1 (TX D1 -> GPIO 23, RX D0 <- GPIO 22)",
     busType: "ATmega328P Hardware UART (9600 Baud)",
     specs: "16 MHz clock · 8-channel 10-bit ADC · Isolated from Wi-Fi interrupts"
   },
   {
     id: "esp32-devkit",
-    name: "ESP32 DevKit V1",
-    title: "Central Safety & Logic Controller",
+    name: "ESP32 DevKit V1 (Dev Master)",
+    title: "Central Safety & Master Controller",
     category: "controller",
-    role: "The master safety brain: calculates SAFE/WARNING/DANGER state machine, drives OLED & buzzer.",
-    dataProduced: "State transitions, display framebuffers, 85dB alarm PWM signals, gateway payload",
-    dataDestination: "OLED (I2C), Buzzer (GPIO23), ESP32-CAM Gateway (Serial)",
-    busType: "Dual-Core Xtensa 240 MHz (Core 1: Safety / Core 0: UI)",
+    role: "The master safety brain: calculates SAFE/WARNING/DANGER state machine, drives OLED & buzzer, monitors CT channels, aggregates Nano telemetry.",
+    dataProduced: "Safety states, OLED framebuffers, 85dB alarm signals on GPIO 13, gateway packet stream",
+    dataDestination: "OLED (GPIO 4/15), Buzzer (GPIO 13), ESP32-CAM Gateway (Hardware Serial)",
+    busType: "Dual-Core Xtensa 240 MHz (Core 1: Safety / Core 0: I/O & UI)",
     specs: "Autonomous offline failsafe · Hysteresis filter · Zero internet dependency"
   },
   {
     id: "esp32-cam",
-    name: "ESP32-CAM",
-    title: "Wi-Fi Gateway & Persistence Controller",
+    name: "ESP32-CAM (CAM Gateway)",
+    title: "Wi-Fi Gateway & Offline SD Logger",
     category: "gateway",
-    role: "Handles 802.11 b/g/n Wi-Fi cloud connectivity, store-and-forward queue, and MicroSD card writes.",
-    dataProduced: "HTTPS REST payload to Supabase and FAT32 CSV file writes",
-    dataDestination: "Supabase Cloud Database & Local MicroSD Card",
-    busType: "Wi-Fi 2.4 GHz + SPI MicroSD Bus",
+    role: "Handles 802.11 b/g/n Wi-Fi cloud connectivity, store-and-forward queue, and onboard SD_MMC logging (Camera disabled in Rev 2.8f).",
+    dataProduced: "HTTPS REST payload to Supabase and circular CSV file writes via SD_MMC",
+    dataDestination: "Supabase Cloud Database & Onboard MicroSD Card",
+    busType: "Wi-Fi 2.4 GHz + SD_MMC Bus",
     specs: "Non-blocking store-and-forward · Automatic Wi-Fi reconnection retry"
   },
   {
@@ -278,7 +305,7 @@ export const HARDWARE_COMPONENTS = [
     role: "Provides immediate at-a-glance physical telemetry: real-time PPM, climate stats, and alert status.",
     dataProduced: "Visual monochrome pixel matrix (128x64 pixels) refreshed at 10 FPS",
     dataDestination: "Direct visual feedback for nearby occupants",
-    busType: "I2C Bus (Address 0x3C, SDA: GPIO21, SCL: GPIO22)",
+    busType: "I2C Bus (Address 0x3C, SDA: GPIO 4, SCL: GPIO 15)",
     specs: "SSD1306 controller · High contrast in daylight or darkness · Low power"
   },
   {
@@ -287,9 +314,9 @@ export const HARDWARE_COMPONENTS = [
     title: "Autonomous Physical Acoustic Siren",
     category: "actuator",
     role: "Sounds immediate audible alarm when hazardous conditions are detected, operating independent of cloud.",
-    dataProduced: "Acoustic sound pressure: 2.4 kHz continuous siren or 1 Hz warning pulses",
+    dataProduced: "Acoustic sound pressure: 2.4 kHz continuous siren or warning pulses",
     dataDestination: "Human auditory perception in surrounding space",
-    busType: "GPIO23 Transistor-driven PWM",
+    busType: "ESP32 GPIO 13 Active Siren Driver",
     specs: "Response time < 10 ms · 85 dB at 10 cm · Driven directly by ESP32 core"
   },
   {
@@ -299,8 +326,8 @@ export const HARDWARE_COMPONENTS = [
     category: "storage",
     role: "Retains circular CSV telemetry logs locally so no data is lost during internet drops or power outages.",
     dataProduced: "CSV records: timestamp, sequence, gas PPM, temperature, humidity, safety state, CRC",
-    dataDestination: "Persistent non-volatile flash storage for historical trend auditing",
-    busType: "SPI Bus Interface",
-    specs: "FAT32 file system · > 18 months continuous data capacity · Sector-buffered writes"
+    dataDestination: "Persistent non-volatile flash storage on ESP32-CAM SD_MMC interface",
+    busType: "SD_MMC Bus Interface",
+    specs: "FAT32 file system · > 18 months continuous data capacity · Fast sector writes"
   }
 ];

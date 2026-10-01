@@ -281,27 +281,36 @@ export const ArchitecturePage: React.FC<ArchitecturePageProps> = ({ onSelectTab 
 
       {/* Interconnect & Pinout Table */}
       <section className="space-y-4">
-        <div>
-          <div className="text-xs font-mono text-emerald-400 uppercase tracking-wider">Bus Wiring & Interconnects</div>
-          <h2 className="text-2xl font-bold text-white mt-1">Hardware Pin Routing Matrix</h2>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+          <div>
+            <div className="text-xs font-mono text-emerald-400 uppercase tracking-wider">Official Rev 2.8f Pinout Specification</div>
+            <h2 className="text-2xl font-bold text-white mt-1">Hardware Pin Routing & Interconnect Matrix</h2>
+          </div>
+          <span className="text-xs font-mono px-3 py-1 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 w-fit">
+            Validated Rev 2.8f Firmware
+          </span>
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-900/80 border-b border-slate-800 font-mono text-slate-400 uppercase tracking-wider">
               <tr>
-                <th className="py-3 px-4">Bus / Signal</th>
-                <th className="py-3 px-4">Source Pin</th>
-                <th className="py-3 px-4">Destination Pin</th>
-                <th className="py-3 px-4">Function & Electrical Characteristics</th>
+                <th className="py-3 px-4">Board / Subsystem</th>
+                <th className="py-3 px-4">Function</th>
+                <th className="py-3 px-4">GPIO / Pin</th>
+                <th className="py-3 px-4">Hardware Connection</th>
+                <th className="py-3 px-4">Bus / Protocol</th>
+                <th className="py-3 px-4">Purpose</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 font-mono text-slate-300">
               {HARDWARE_PINS.map((pin, i) => (
                 <tr key={i} className="hover:bg-slate-900/40 transition-colors">
-                  <td className="py-3 px-4 font-semibold text-emerald-400">{pin.bus}</td>
-                  <td className="py-3 px-4 text-slate-300">{pin.source}</td>
-                  <td className="py-3 px-4 text-slate-300">{pin.destination}</td>
+                  <td className="py-3 px-4 font-semibold text-white whitespace-nowrap">{pin.board}</td>
+                  <td className="py-3 px-4 text-emerald-400 font-semibold">{pin.function}</td>
+                  <td className="py-3 px-4 font-bold text-amber-300 whitespace-nowrap bg-slate-900/50">{pin.pin}</td>
+                  <td className="py-3 px-4 text-slate-200">{pin.connection}</td>
+                  <td className="py-3 px-4 text-cyan-400 text-[11px]">{pin.bus}</td>
                   <td className="py-3 px-4 font-sans text-slate-400 text-xs">{pin.purpose}</td>
                 </tr>
               ))}

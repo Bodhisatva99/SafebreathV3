@@ -1,7 +1,7 @@
 import React from 'react';
 import { Smartphone, Cloud, Database, Wifi, ShieldAlert, Bell, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { DownloadAppButton } from './DownloadAppButton';
-import { SafeBreathShieldSymbol, SafeBreathAndroidAppIcon } from './SafeBreathLogo';
+import { SafeBreathShieldSymbol, SafeBreathAndroidAppIcon, SafeBreath3DAppIcon } from './SafeBreathLogo';
 
 export const EcosystemSection: React.FC = () => {
   return (
@@ -105,7 +105,7 @@ export const EcosystemSection: React.FC = () => {
 
             {/* Installed Android Product Identity Lockup */}
             <div className="flex items-center gap-3.5 pt-1">
-              <SafeBreathAndroidAppIcon size={52} className="shrink-0 shadow-md" />
+              <SafeBreath3DAppIcon size={54} className="shrink-0 shadow-lg" />
               <div>
                 <h4 className="text-sm font-bold text-slate-900 leading-snug">SafeBreath V3 for Android</h4>
                 <div className="text-[11px] text-slate-500">Real-time monitoring and remote alerts</div>
