@@ -382,12 +382,18 @@ export const SafeBreathLogo: React.FC<SafeBreathLogoProps> = ({
       {/* Typography Lockup */}
       <div className="flex flex-col justify-center leading-none">
         <div className="flex items-baseline font-extrabold tracking-tight text-[20px] sm:text-[22px] font-sans">
-          {/* "Safe" in solid dark navy */}
+          {/* "Safe" in solid dark navy or crisp white */}
           <span className={isLightBg ? 'text-[#0B132B]' : 'text-white'}>
             Safe
           </span>
-          {/* "Breath" with the teal-to-cyan-to-blue gradient */}
-          <span className="bg-gradient-to-r from-[#082F3B] via-[#058296] to-[#00AEEF] bg-clip-text text-transparent ml-[0.5px]">
+          {/* "Breath" with teal-to-cyan-to-blue gradient */}
+          <span
+            className={`bg-clip-text text-transparent ml-[0.5px] ${
+              isLightBg
+                ? 'bg-gradient-to-r from-[#082F3B] via-[#058296] to-[#00AEEF]'
+                : 'bg-gradient-to-r from-[#34D399] via-[#06B6D4] to-[#38BDF8]'
+            }`}
+          >
             Breath
           </span>
         </div>

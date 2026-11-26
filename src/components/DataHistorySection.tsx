@@ -1,197 +1,506 @@
-import React, { useState, useEffect } from 'react';
-import { Database, Filter, RefreshCw, CheckCircle2, AlertTriangle, ShieldAlert, Clock, ArrowUpDown } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { RefreshCw, Download, AlertCircle, Clock } from 'lucide-react';
 import { supabase, SensorLogRow } from '../lib/supabase';
+import {
+  evaluateTelemetrySafety,
+  formatUtcAndLocalDateTime,
+  getSafetyBadgeClasses,
+} from '../lib/safetyConfig';
+
+type HistoryFilter = 'all' | 'alerts' | 'normal';
+type TimeRangeFilter = 'all' | '1h' | '24h' | '7d';
+
+const PAGE_SIZE = 50;
+
+function mergeHistoryRows(existing: SensorLogRow[], incoming: SensorLogRow[]): SensorLogRow[] {
+  const byId = new Map<number, SensorLogRow>();
+  for (const row of existing) byId.set(row.id, row);
+  for (const row of incoming) byId.set(row.id, row);
+  return Array.from(byId.values()).sort((a, b) => b.id - a.id);
+}
 
 export const DataHistorySection: React.FC = () => {
   const [logs, setLogs] = useState<SensorLogRow[]>([]);
   const [selectedRow, setSelectedRow] = useState<SensorLogRow | null>(null);
-  const [filterState, setFilterState] = useState<'all' | 'alerts' | 'safe'>('all');
+  const [filterState, setFilterState] = useState<HistoryFilter>('all');
+  const [timeRange, setTimeRange] = useState<TimeRangeFilter>('all');
+  const [sessionFilter, setSessionFilter] = useState<string>('all');
+  const [deviceFilter, setDeviceFilter] = useState<string>('all');
+  const [hasMoreOlder, setHasMoreOlder] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [totalCount, setTotalCount] = useState<number>(0);
+  const [isLoadingOlder, setIsLoadingOlder] = useState<boolean>(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [totalLedgerCount, setTotalLedgerCount] = useState<number>(0);
 
-  const fetchRealLogs = async () => {
-    setIsLoading(true);
-    try {
-      let query = supabase
-        .from('sensor_logs')
-        .select('*', { count: 'exact' })
-        .order('id', { ascending: false })
-        .limit(30);
+  const logsRef = useRef<SensorLogRow[]>([]);
+  logsRef.current = logs;
 
-      if (filterState === 'alerts') {
-        query = query.or('alert_flag.eq.true,system_alarm.eq.true,state_co.gt.0,state_voc.gt.0,state_lpg.gt.0');
-      } else if (filterState === 'safe') {
-        query = query.eq('alert_flag', false).eq('system_alarm', false);
+  const matchesActiveFilter = useCallback(
+    (log: SensorLogRow): boolean => {
+      if (deviceFilter !== 'all' && log.device_id !== deviceFilter) {
+        return false;
+      }
+      if (sessionFilter !== 'all' && String(log.session_id) !== sessionFilter) {
+        return false;
+      }
+      if (timeRange !== 'all') {
+        const ms = Date.parse(log.created_at);
+        if (Number.isFinite(ms)) {
+          const cutoffMs =
+            timeRange === '1h'
+              ? 3600 * 1000
+              : timeRange === '24h'
+              ? 24 * 3600 * 1000
+              : 7 * 24 * 3600 * 1000;
+          if (Date.now() - ms > cutoffMs) return false;
+        }
       }
 
-      const { data, count, error } = await query;
+      const evaluation = evaluateTelemetrySafety(log, { checkCloudAge: false });
+      if (filterState === 'alerts') {
+        return evaluation.status !== 'NORMAL';
+      }
+      if (filterState === 'normal') {
+        return evaluation.status === 'NORMAL';
+      }
+      return true;
+    },
+    [filterState, timeRange, sessionFilter, deviceFilter]
+  );
+
+  const buildBaseQuery = useCallback(() => {
+    let query = supabase
+      .from('sensor_logs')
+      .select('*')
+      .order('id', { ascending: false })
+      .limit(PAGE_SIZE);
+
+    if (deviceFilter !== 'all') {
+      query = query.eq('device_id', deviceFilter);
+    }
+
+    if (sessionFilter !== 'all') {
+      query = query.eq('session_id', Number(sessionFilter));
+    }
+
+    if (timeRange !== 'all') {
+      const cutoffMs =
+        timeRange === '1h'
+          ? 3600 * 1000
+          : timeRange === '24h'
+          ? 24 * 3600 * 1000
+          : 7 * 24 * 3600 * 1000;
+      query = query.gte('created_at', new Date(Date.now() - cutoffMs).toISOString());
+    }
+    return query;
+  }, [deviceFilter, sessionFilter, timeRange]);
+
+  const fetchRealLogs = useCallback(async () => {
+    setIsLoading(true);
+    setErrorMsg(null);
+    try {
+      const [{ data, error }, { count, error: countError }] = await Promise.all([
+        buildBaseQuery(),
+        supabase.from('sensor_logs').select('id', { count: 'exact', head: true }),
+      ]);
+
       if (error) {
-        console.error("Error fetching logs:", error);
+        setErrorMsg(error.message || 'Failed to query telemetry history from Supabase.');
         return;
       }
 
-      if (data) {
-        setLogs(data as SensorLogRow[]);
-        if (data.length > 0 && !selectedRow) {
-          setSelectedRow(data[0] as SensorLogRow);
-        }
+      if (!countError && count !== null) {
+        setTotalLedgerCount(count);
       }
-      if (count !== null) {
-        setTotalCount(count);
-      }
+
+      const fetched = (data ?? []) as SensorLogRow[];
+      setLogs((prev) => mergeHistoryRows(prev.filter(matchesActiveFilter), fetched));
+      setHasMoreOlder(fetched.length === PAGE_SIZE);
     } catch (err) {
-      console.error("Failed to query sensor_logs:", err);
+      setErrorMsg(err instanceof Error ? err.message : 'Network error reading telemetry history.');
     } finally {
       setIsLoading(false);
+    }
+  }, [buildBaseQuery, matchesActiveFilter]);
+
+  const loadOlderLogs = async () => {
+    const current = logsRef.current;
+    if (current.length === 0 || isLoadingOlder) return;
+    const oldestId = current[current.length - 1].id;
+    setIsLoadingOlder(true);
+    setErrorMsg(null);
+    try {
+      const { data, error } = await buildBaseQuery().lt('id', oldestId);
+      if (error) {
+        setErrorMsg(error.message || 'Failed to load older records.');
+        return;
+      }
+      const older = (data ?? []) as SensorLogRow[];
+      setLogs((prev) => mergeHistoryRows(prev, older));
+      setHasMoreOlder(older.length === PAGE_SIZE);
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Network error loading older rows.');
+    } finally {
+      setIsLoadingOlder(false);
     }
   };
 
   useEffect(() => {
+    setLogs([]);
     fetchRealLogs();
 
-    // Subscribe to new rows
+    const uniqueName = `history_sensor_logs_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const channel = supabase
-      .channel('history_sensor_logs')
+      .channel(uniqueName)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sensor_logs' }, (payload) => {
         const newLog = payload.new as SensorLogRow;
-        setLogs(prev => [newLog, ...prev.slice(0, 29)]);
-        setTotalCount(c => c + 1);
+        setTotalLedgerCount((c) => c + 1);
+        setLogs((prev) => mergeHistoryRows(prev, [newLog]));
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'sensor_logs' }, (payload) => {
+        const updatedLog = payload.new as SensorLogRow;
+        setLogs((prev) => mergeHistoryRows(prev, [updatedLog]));
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [filterState]);
+  }, [fetchRealLogs]);
 
-  const getStateBadge = (log: SensorLogRow) => {
-    if (log.system_alarm || log.alert_flag || log.state_co === 2 || log.state_voc === 2 || log.state_lpg === 2) {
-      return { label: 'DANGER', badgeClass: 'bg-rose-100 text-rose-800 border-rose-300 font-bold' };
+  const availableSessions = useMemo(() => {
+    return Array.from(new Set(logs.map((l) => l.session_id))).sort((a, b) => b - a);
+  }, [logs]);
+
+  const availableDevices = useMemo(() => {
+    const ids = new Set<string>();
+    for (const l of logs) {
+      if (l.device_id && typeof l.device_id === 'string') ids.add(l.device_id);
     }
-    if (log.state_co === 1 || log.state_voc === 1 || log.state_lpg === 1 || log.temp >= 40) {
-      return { label: 'WARNING', badgeClass: 'bg-amber-100 text-amber-800 border-amber-300 font-bold' };
+    return Array.from(ids).sort();
+  }, [logs]);
+
+  const visibleLogs = useMemo(() => {
+    return logs.filter(matchesActiveFilter);
+  }, [logs, matchesActiveFilter]);
+
+  const incidentTimeline = useMemo(() => {
+    return logs
+      .filter((r) => {
+        const ev = evaluateTelemetrySafety(r, { checkCloudAge: false });
+        return ev.status === 'DANGER' || ev.status === 'WARNING' || ev.status === 'SENSOR FAULT';
+      })
+      .slice(0, 6);
+  }, [logs]);
+
+  // Keep Inspector synchronized with active visible filter results
+  useEffect(() => {
+    if (visibleLogs.length === 0) {
+      setSelectedRow(null);
+      return;
     }
-    return { label: 'SAFE', badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200/80 font-medium' };
+    if (!selectedRow || !visibleLogs.some((r) => r.id === selectedRow.id)) {
+      setSelectedRow(visibleLogs[0]);
+    }
+  }, [visibleLogs, selectedRow]);
+
+  const handleExportCsv = () => {
+    if (visibleLogs.length === 0) return;
+    const headers = [
+      'id',
+      'device_id',
+      'created_at',
+      'session_id',
+      'seq_id',
+      'co_ppm',
+      'voc_indicator',
+      'lpg_ppm',
+      'temp_c',
+      'humidity_pct',
+      'classified_status',
+      'co_valid',
+      'voc_valid',
+      'lpg_valid',
+      'dht_valid',
+      'nano_online',
+      'ze07_online',
+      'system_fault',
+      'system_degraded',
+      'data_age_ms',
+    ];
+    const rows = visibleLogs.map((r) => {
+      const ev = evaluateTelemetrySafety(r, { checkCloudAge: false });
+      return [
+        r.id,
+        r.device_id ?? 'unscoped',
+        r.created_at,
+        r.session_id,
+        r.seq_id,
+        r.co_ppm,
+        r.voc_ppm,
+        r.lpg_ppm,
+        r.temp,
+        r.hum,
+        ev.status,
+        r.co_valid ?? 'null',
+        r.voc_valid ?? 'null',
+        r.lpg_valid ?? 'null',
+        r.dht_valid ?? 'null',
+        r.nano_online ?? 'null',
+        r.ze07_online ?? 'null',
+        r.system_fault ?? 'null',
+        r.system_degraded ?? 'null',
+        r.data_age_ms,
+      ].join(',');
+    });
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `safebreath-loaded-logs-${filterState}-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
+  const renderValidBadge = (flag: boolean | undefined) => {
+    if (flag === true) {
+      return <span className="text-[10px] font-semibold text-emerald-700">Valid</span>;
+    }
+    if (flag === false) {
+      return <span className="text-[10px] font-semibold text-rose-700">Fault</span>;
+    }
+    return <span className="text-[10px] font-semibold text-amber-700">Unknown</span>;
+  };
+
+  const formatSubsystemText = (flag: boolean | undefined) => {
+    if (flag === true) return 'Online';
+    if (flag === false) return 'Offline';
+    return 'Unknown';
+  };
+
+  const selectedEvaluation = selectedRow
+    ? evaluateTelemetrySafety(selectedRow, { checkCloudAge: false })
+    : null;
+
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-10 shadow-sm space-y-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-        <div>
-          <div className="inline-flex items-center gap-2 text-xs font-mono text-emerald-800 font-semibold uppercase tracking-wider mb-1">
-            <Database className="w-3.5 h-3.5" />
-            <span>AUTHENTIC DATABASE TELEMETRY LEDGER</span>
+    <div className="bg-[#F5F5F7] rounded-[28px] border border-black/[0.06] p-5 sm:p-8 space-y-5">
+      {/* Toolbar */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-4 border-b border-black/[0.08]">
+        <div className="text-xs font-mono text-[#6E6E73] space-y-1">
+          <div>
+            Showing <strong className="text-[#1D1D1F] tabular-nums">{visibleLogs.length}</strong>{' '}
+            matching rows (from {logs.length} loaded ·{' '}
+            <strong className="text-[#1D1D1F] tabular-nums">{totalLedgerCount.toLocaleString()}</strong>{' '}
+            total ledger records)
           </div>
-          <h3 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            Historical Telemetry & Alert History
-          </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Querying authentic historical records directly from <code>public.sensor_logs</code> on Supabase, ordered newest to oldest.
-          </p>
+          <div className="text-[11px] text-[#86868B]">
+            {availableDevices.length > 0
+              ? `Multi-device stream active (${availableDevices.length} device_id values detected).`
+              : 'Schema currently logs shared node stream (`session_id` tracking); optional `device_id` column supported when populated.'}
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          {/* Filter Pills */}
-          <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100 rounded-xl border border-slate-200">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Status Filter */}
+          <div className="flex items-center gap-1 p-1 bg-white rounded-full border border-black/[0.08]">
             <button
+              type="button"
               onClick={() => setFilterState('all')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                filterState === 'all' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
+              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors whitespace-nowrap cursor-pointer ${
+                filterState === 'all' ? 'bg-[#1D1D1F] text-white font-semibold' : 'text-[#6E6E73] hover:text-[#1D1D1F]'
               }`}
             >
-              All Logs
+              All
             </button>
             <button
+              type="button"
               onClick={() => setFilterState('alerts')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                filterState === 'alerts' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
+              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors whitespace-nowrap cursor-pointer ${
+                filterState === 'alerts' ? 'bg-[#1D1D1F] text-white font-semibold' : 'text-[#6E6E73] hover:text-[#1D1D1F]'
               }`}
             >
-              Alerts & Warnings
+              Alerts &amp; Faults
             </button>
             <button
-              onClick={() => setFilterState('safe')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                filterState === 'safe' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
+              type="button"
+              onClick={() => setFilterState('normal')}
+              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors whitespace-nowrap cursor-pointer ${
+                filterState === 'normal' ? 'bg-[#1D1D1F] text-white font-semibold' : 'text-[#6E6E73] hover:text-[#1D1D1F]'
               }`}
             >
-              Nominal Only
+              Verified Normal
             </button>
           </div>
 
+          {/* Time Range Selector */}
+          <select
+            aria-label="Filter by date range"
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value as TimeRangeFilter)}
+            className="px-3 py-2 rounded-full border border-black/[0.08] bg-white text-xs font-medium text-[#1D1D1F] cursor-pointer"
+          >
+            <option value="all">All Dates</option>
+            <option value="1h">Last 1 Hour</option>
+            <option value="24h">Last 24 Hours</option>
+            <option value="7d">Last 7 Days</option>
+          </select>
+
+          {/* Device Filter (when device_id column is populated) */}
+          {availableDevices.length > 0 && (
+            <select
+              aria-label="Filter by device ID"
+              value={deviceFilter}
+              onChange={(e) => setDeviceFilter(e.target.value)}
+              className="px-3 py-2 rounded-full border border-black/[0.08] bg-white text-xs font-mono text-[#1D1D1F] cursor-pointer"
+            >
+              <option value="all">All Devices</option>
+              {availableDevices.map((did) => (
+                <option key={did} value={did}>
+                  {did}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {/* Session Filter */}
+          <select
+            aria-label="Filter by session ID"
+            value={sessionFilter}
+            onChange={(e) => setSessionFilter(e.target.value)}
+            className="px-3 py-2 rounded-full border border-black/[0.08] bg-white text-xs font-mono text-[#1D1D1F] cursor-pointer"
+          >
+            <option value="all">All Sessions</option>
+            {availableSessions.map((sid) => (
+              <option key={sid} value={String(sid)}>
+                Session #{sid}
+              </option>
+            ))}
+          </select>
+
+          {/* Export Loaded Records */}
           <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={visibleLogs.length === 0}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-black/[0.08] bg-white text-xs font-semibold text-[#1D1D1F] hover:bg-black/5 disabled:opacity-40 transition-colors cursor-pointer"
+            title="Export loaded visible Supabase database rows to CSV"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Export Loaded CSV</span>
+          </button>
+
+          <button
+            type="button"
             onClick={fetchRealLogs}
             disabled={isLoading}
-            className="p-2 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors shrink-0"
-            title="Refresh database records"
-            aria-label="Refresh database records"
+            className="p-2 rounded-full border border-black/[0.08] bg-white text-[#1D1D1F] hover:bg-black/5 transition-colors shrink-0 min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
+            title="Refresh records"
+            aria-label="Refresh records"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* Left: Real Logs Table (7 Cols) */}
-        <div className="lg:col-span-7 bg-slate-50/60 rounded-2xl border border-slate-200 overflow-hidden space-y-2 p-3 sm:p-4">
-          <div className="flex items-center justify-between text-xs font-mono text-slate-500 pb-2 px-1">
-            <span>SHOWING LAST {logs.length} RECORDS</span>
-            <div className="flex items-center gap-2">
-              <span className="hidden sm:inline">TOTAL RECORDED: {totalCount}</span>
-              <span className="sm:hidden text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">← Swipe Table →</span>
-            </div>
+      {/* Explicit Query Error Banner */}
+      {errorMsg && (
+        <div className="rounded-2xl bg-rose-50 border border-rose-200 px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-800">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>Database query error: {errorMsg}</span>
           </div>
+          <button
+            type="button"
+            onClick={fetchRealLogs}
+            className="px-3 py-1.5 rounded-full bg-rose-700 text-white font-semibold hover:bg-rose-800 cursor-pointer"
+          >
+            Retry Query
+          </button>
+        </div>
+      )}
 
-          <div className="overflow-x-auto max-h-[380px] overflow-y-auto rounded-xl border border-slate-200 bg-white">
+      {/* Recent Incident Timeline Strip */}
+      {incidentTimeline.length > 0 && (
+        <div className="bg-white rounded-2xl border border-black/[0.06] p-4 space-y-2.5">
+          <div className="flex items-center justify-between text-xs font-mono text-[#6E6E73]">
+            <span className="font-semibold text-[#1D1D1F] flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-amber-600" />
+              Recent Elevated / Fault Incident Timeline
+            </span>
+            <span>{incidentTimeline.length} events in loaded window</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {incidentTimeline.map((inc) => {
+              const ev = evaluateTelemetrySafety(inc, { checkCloudAge: false });
+              return (
+                <button
+                  key={inc.id}
+                  type="button"
+                  onClick={() => {
+                    setFilterState('all');
+                    setSelectedRow(inc);
+                  }}
+                  className="text-left px-3 py-1.5 rounded-xl bg-[#F5F5F7] hover:bg-black/[0.06] border border-black/[0.05] text-[11px] font-mono transition-colors cursor-pointer"
+                >
+                  <span className="font-bold text-[#1D1D1F]">#{inc.id}</span>{' '}
+                  <span className="text-[#6E6E73]">{formatUtcAndLocalDateTime(inc.created_at)}</span>{' '}
+                  <span className="text-rose-700 font-semibold">· {ev.status}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Table + Row Inspector */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="lg:col-span-7 border border-black/[0.06] rounded-2xl overflow-hidden bg-white">
+          <div className="overflow-x-auto max-h-[420px] overflow-y-auto">
             <table className="w-full text-left text-xs font-mono">
-              <thead className="sticky top-0 bg-slate-100 border-b border-slate-200 text-slate-600 text-[11px] uppercase tracking-wider">
+              <thead className="sticky top-0 bg-[#FBFBFD] border-b border-black/[0.06] text-[#6E6E73] text-[11px]">
                 <tr>
-                  <th className="py-2.5 px-3">Record ID</th>
-                  <th className="py-2.5 px-3">Time</th>
-                  <th className="py-2.5 px-3">CO (ppm)</th>
-                  <th className="py-2.5 px-3">VOC (ppm)</th>
-                  <th className="py-2.5 px-3">LPG (ppm)</th>
-                  <th className="py-2.5 px-3">Packet</th>
-                  <th className="py-2.5 px-3">State</th>
+                  <th className="py-3 px-3.5 font-semibold">ID</th>
+                  <th className="py-3 px-3.5 font-semibold">Date &amp; Time</th>
+                  <th className="py-3 px-3.5 font-semibold">CO</th>
+                  <th className="py-3 px-3.5 font-semibold">VOC ind.</th>
+                  <th className="py-3 px-3.5 font-semibold">LPG</th>
+                  <th className="py-3 px-3.5 font-semibold">State</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {logs.length === 0 ? (
+              <tbody className="divide-y divide-black/[0.05] text-[#1D1D1F]">
+                {visibleLogs.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-6 text-center text-slate-400">
-                      {isLoading ? 'Loading records from Supabase...' : 'No records match this filter.'}
+                    <td colSpan={6} className="py-10 text-center text-[#86868B]">
+                      {isLoading ? 'Querying telemetry ledger…' : 'No records match the active filter criteria.'}
                     </td>
                   </tr>
                 ) : (
-                  logs.map((row) => {
+                  visibleLogs.map((row) => {
                     const isSelected = selectedRow?.id === row.id;
-                    const st = getStateBadge(row);
+                    const ev = evaluateTelemetrySafety(row, { checkCloudAge: false });
                     return (
                       <tr
                         key={row.id}
                         onClick={() => setSelectedRow(row)}
                         className={`cursor-pointer transition-colors ${
-                          isSelected ? 'bg-emerald-50/80 font-semibold' : 'hover:bg-slate-50'
+                          isSelected ? 'bg-emerald-50/70 font-semibold' : 'hover:bg-[#F5F5F7]/70'
                         }`}
                       >
-                        <td className="py-2.5 px-3 text-slate-900 font-bold whitespace-nowrap">
+                        <td className="py-2.5 px-3.5 font-bold whitespace-nowrap tabular-nums">
                           #{row.id}
                         </td>
-                        <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap">
-                          {new Date(row.created_at).toLocaleTimeString()}
+                        <td className="py-2.5 px-3.5 text-[#6E6E73] whitespace-nowrap tabular-nums">
+                          {formatUtcAndLocalDateTime(row.created_at)}
                         </td>
-                        <td className="py-2.5 px-3 tabular-nums">{row.co_ppm}</td>
-                        <td className="py-2.5 px-3 tabular-nums">{row.voc_ppm}</td>
-                        <td className="py-2.5 px-3 tabular-nums">{row.lpg_ppm}</td>
-                        <td className="py-2.5 px-3 text-slate-400 text-[11px]">
-                          pkt #{row.seq_id}
-                        </td>
-                        <td className="py-2.5 px-3">
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] border ${st.badgeClass}`}>
-                            {st.label}
+                        <td className="py-2.5 px-3.5 tabular-nums">{row.co_ppm}</td>
+                        <td className="py-2.5 px-3.5 tabular-nums">{row.voc_ppm}</td>
+                        <td className="py-2.5 px-3.5 tabular-nums">{row.lpg_ppm}</td>
+                        <td className="py-2.5 px-3.5">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] border whitespace-nowrap ${getSafetyBadgeClasses(ev.status)}`}>
+                            {ev.status}
                           </span>
                         </td>
                       </tr>
@@ -201,92 +510,125 @@ export const DataHistorySection: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          {hasMoreOlder && logs.length > 0 && (
+            <div className="p-3 bg-[#FBFBFD] border-t border-black/[0.06] flex justify-center">
+              <button
+                type="button"
+                onClick={loadOlderLogs}
+                disabled={isLoading || isLoadingOlder}
+                className="px-4 py-1.5 rounded-full bg-white border border-black/[0.08] text-xs font-semibold text-[#1D1D1F] hover:bg-black/5 cursor-pointer disabled:opacity-50"
+              >
+                {isLoadingOlder ? 'Loading Older Page…' : 'Load Older Records (+50 Cursor)'}
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Right: Selected Row Detailed Telemetry Inspector (5 Cols) */}
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-6 space-y-5 shadow-sm">
-          {selectedRow ? (
+        {/* Row Inspector */}
+        <div className="lg:col-span-5 bg-white rounded-2xl border border-black/[0.06] p-6 space-y-5">
+          {selectedRow && selectedEvaluation ? (
             <>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-start justify-between gap-2 pb-3 border-b border-black/[0.06]">
                 <div>
-                  <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block">RECORD ID #{selectedRow.id}</span>
-                  <div className="text-sm font-bold text-slate-900 mt-0.5">
-                    {new Date(selectedRow.created_at).toLocaleString()}
+                  <span className="text-xs font-mono text-[#6E6E73] block">
+                    Record #{selectedRow.id} · Seq #{selectedRow.seq_id} · Node {selectedRow.device_id || 'Unscoped'}
+                  </span>
+                  <div className="text-sm font-bold text-[#1D1D1F] mt-0.5">
+                    {formatUtcAndLocalDateTime(selectedRow.created_at)}
                   </div>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-mono border ${getStateBadge(selectedRow).badgeClass}`}>
-                  {getStateBadge(selectedRow).label}
+                <span className={`px-2.5 py-1 rounded-full text-xs font-mono border shrink-0 ${getSafetyBadgeClasses(selectedEvaluation.status)}`}>
+                  {selectedEvaluation.status}
                 </span>
               </div>
 
-              {/* Gas Metrics */}
-              <div className="grid grid-cols-3 gap-2.5 text-center font-mono">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <span className="text-[10px] text-slate-400 block">CO LEVEL</span>
-                  <span className="text-base font-bold text-slate-900 mt-0.5 block">{selectedRow.co_ppm} ppm</span>
-                  <span className="text-[9px] text-emerald-700">{selectedRow.co_valid ? 'Valid' : 'Fault'}</span>
+              <div className="text-xs text-[#6E6E73] bg-[#F5F5F7] rounded-xl px-3.5 py-2.5 border border-black/[0.04]">
+                {selectedEvaluation.reason}
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 text-center font-mono">
+                <div className="p-3 rounded-xl bg-[#F5F5F7] border border-black/[0.04]">
+                  <span className="text-[10px] text-[#6E6E73] block">CO</span>
+                  <span className="text-base font-bold text-[#1D1D1F] mt-0.5 block tabular-nums">
+                    {selectedRow.co_ppm} ppm
+                  </span>
+                  {renderValidBadge(selectedRow.co_valid)}
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <span className="text-[10px] text-slate-400 block">VOC LEVEL</span>
-                  <span className="text-base font-bold text-slate-900 mt-0.5 block">{selectedRow.voc_ppm} ppm</span>
-                  <span className="text-[9px] text-emerald-700">{selectedRow.voc_valid ? 'Valid' : 'Fault'}</span>
+                <div className="p-3 rounded-xl bg-[#F5F5F7] border border-black/[0.04]">
+                  <span className="text-[10px] text-[#6E6E73] block">VOC ind.</span>
+                  <span className="text-base font-bold text-[#1D1D1F] mt-0.5 block tabular-nums">
+                    {selectedRow.voc_ppm}
+                  </span>
+                  {renderValidBadge(selectedRow.voc_valid)}
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <span className="text-[10px] text-slate-400 block">LPG LEVEL</span>
-                  <span className="text-base font-bold text-slate-900 mt-0.5 block">{selectedRow.lpg_ppm} ppm</span>
-                  <span className="text-[9px] text-emerald-700">{selectedRow.lpg_valid ? 'Valid' : 'Fault'}</span>
+                <div className="p-3 rounded-xl bg-[#F5F5F7] border border-black/[0.04]">
+                  <span className="text-[10px] text-[#6E6E73] block">LPG</span>
+                  <span className="text-base font-bold text-[#1D1D1F] mt-0.5 block tabular-nums">
+                    {selectedRow.lpg_ppm} ppm
+                  </span>
+                  {renderValidBadge(selectedRow.lpg_valid)}
                 </div>
               </div>
 
-              {/* Climate & Alarm State */}
               <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <span className="text-[10px] text-slate-400 uppercase block">Temperature</span>
-                  <span className="text-sm font-bold text-slate-900 block mt-0.5">{selectedRow.temp} °C</span>
+                <div className="p-3 rounded-xl bg-[#F5F5F7] border border-black/[0.04] flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-[#6E6E73] block">Ambient Temp</span>
+                    <span className="text-sm font-bold text-[#1D1D1F] block mt-0.5 tabular-nums">{selectedRow.temp} °C</span>
+                  </div>
+                  {renderValidBadge(selectedRow.dht_valid)}
                 </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                  <span className="text-[10px] text-slate-400 uppercase block">Humidity</span>
-                  <span className="text-sm font-bold text-slate-900 block mt-0.5">{selectedRow.hum} %</span>
+                <div className="p-3 rounded-xl bg-[#F5F5F7] border border-black/[0.04] flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-[#6E6E73] block">Humidity</span>
+                    <span className="text-sm font-bold text-[#1D1D1F] block mt-0.5 tabular-nums">{selectedRow.hum} %</span>
+                  </div>
+                  {renderValidBadge(selectedRow.dht_valid)}
                 </div>
               </div>
 
-              {/* Hardware Diagnostic Ledger */}
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono space-y-1.5 text-slate-600">
+              <div className="pt-3 border-t border-black/[0.06] text-xs font-mono space-y-2 text-[#6E6E73]">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Session ID:</span>
-                  <span className="font-bold text-slate-900">{selectedRow.session_id}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Sequence / Dev Seq:</span>
-                  <span className="text-slate-900">#{selectedRow.seq_id} / #{selectedRow.dev_seq_id || '-'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Data Age / Uptime:</span>
-                  <span className="text-slate-900">{selectedRow.data_age_ms}ms / {Math.floor(selectedRow.uptime_ms / 1000)}s</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">System Alarm / Latched:</span>
-                  <span className={selectedRow.system_alarm ? 'text-rose-700 font-bold' : 'text-emerald-700'}>
-                    {selectedRow.system_alarm ? 'ACTIVE' : 'NO'} / {selectedRow.thermal_latched ? 'YES' : 'NO'}
+                  <span>Session / Dev Seq</span>
+                  <span className="font-bold text-[#1D1D1F] tabular-nums">
+                    #{selectedRow.session_id} / #{selectedRow.dev_seq_id || '—'}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Controllers Online:</span>
-                  <span className="text-slate-900">
-                    Nano: {selectedRow.nano_online ? 'YES' : 'NO'} · ZE07: {selectedRow.ze07_online ? 'YES' : 'NO'}
+                  <span>Data Age / Uptime</span>
+                  <span className="text-[#1D1D1F] tabular-nums">
+                    {selectedRow.data_age_ms ?? '—'} ms / {Math.floor((selectedRow.uptime_ms || 0) / 1000)}s
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Alarm / Fault / Degraded</span>
+                  <span className="text-[#1D1D1F]">
+                    {selectedRow.system_alarm ? 'Alarm' : 'No'} · {selectedRow.system_fault === true ? 'Fault' : selectedRow.system_fault === false ? 'No' : 'Unknown'} · {selectedRow.system_degraded ? 'Degraded' : 'No'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Event Loss / Dropped</span>
+                  <span className="text-[#1D1D1F] tabular-nums">
+                    {selectedRow.ev_loss ? 'Yes' : 'No'} ({selectedRow.dropped_events ?? 0})
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Controllers</span>
+                  <span className="text-[#1D1D1F]">
+                    Nano: {formatSubsystemText(selectedRow.nano_online)} · ZE07: {formatSubsystemText(selectedRow.ze07_online)}
                   </span>
                 </div>
               </div>
             </>
           ) : (
-            <div className="py-12 text-center text-slate-400 text-xs">
-              Select a row from the ledger to inspect full telemetry diagnostics.
+            <div className="py-12 text-center text-[#86868B] text-xs">
+              Select any log entry to inspect device telemetry details.
             </div>
           )}
         </div>
-
       </div>
     </div>
   );

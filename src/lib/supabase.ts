@@ -1,12 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
-export const SUPABASE_URL = "https://fleiawoctghecndjesdn.supabase.co";
-export const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_9ZA0tXff6puyy-HarkhEVA_Hl_osXjO";
+export const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL || 'https://fleiawoctghecndjesdn.supabase.co';
+export const SUPABASE_PUBLISHABLE_KEY =
+  import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_9ZA0tXff6puyy-HarkhEVA_Hl_osXjO';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 export interface SensorLogRow {
   id: number;
+  device_id?: string | null;
+  firmware_rev?: string | null;
+  sampled_at?: string | null;
+  gateway_received_at?: string | null;
   created_at: string;
   co_ppm: number;
   voc_ppm: number;
@@ -41,4 +47,5 @@ export interface SensorLogRow {
   dropped_events?: number;
 }
 
-export const APP_DOWNLOAD_URL = "https://github.com/Bodhisatva99/SafebreathV3/releases/latest/download/SafeBreathV3.apk";
+export const APP_DOWNLOAD_URL =
+  'https://github.com/Bodhisatva99/SafebreathV3/releases/latest/download/SafeBreathV3.apk';

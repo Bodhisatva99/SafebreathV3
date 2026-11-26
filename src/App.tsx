@@ -3,30 +3,62 @@ import { NavSection } from './types';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { ProductPage } from './pages/ProductPage';
-import { PrecisionHardwareSimulator } from './components/PrecisionHardwareSimulator';
-import { SafeBreathShieldSymbol } from './components/SafeBreathLogo';
+
+const SPY_SECTIONS: NavSection[] = ['data', 'safety', 'technology', 'app', 'simulator'];
 
 export default function App() {
   const [currentSection, setCurrentSection] = useState<NavSection>('product');
-  const [splashVisible, setSplashVisible] = useState(true);
 
   useEffect(() => {
-    // Very short brand transition (~500ms) with shield symbol
-    const timer = setTimeout(() => {
-      setSplashVisible(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    const handleTopCheck = () => {
+      if (window.scrollY < 260) {
+        setCurrentSection('product');
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (window.scrollY < 260) {
+          setCurrentSection('product');
+          return;
+        }
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+        if (visible.length > 0) {
+          const id = visible[0].target.id as NavSection;
+          if (SPY_SECTIONS.includes(id)) {
+            setCurrentSection(id);
+          }
+        }
+      },
+      {
+        rootMargin: '-22% 0px -55% 0px',
+        threshold: [0.05, 0.2, 0.45],
+      }
+    );
+
+    SPY_SECTIONS.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+
+    window.addEventListener('scroll', handleTopCheck, { passive: true });
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', handleTopCheck);
+    };
   }, []);
 
   const handleNavigate = (section: NavSection) => {
     setCurrentSection(section);
-    
+
     if (section === 'product') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
-    // Attempt to scroll to target anchor section if it exists on the page
     const element = document.getElementById(section);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
@@ -36,28 +68,13 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fafbfc] text-slate-900 selection:bg-emerald-600 selection:text-white font-sans relative">
-      {/* Short Brand Splash Transition */}
-      {splashVisible && (
-        <div 
-          className="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center transition-opacity duration-300 pointer-events-none"
-          aria-hidden="true"
-        >
-          <div className="flex flex-col items-center animate-pulse">
-            <SafeBreathShieldSymbol size={54} />
-            <div className="text-[10px] font-mono text-slate-400 uppercase tracking-[0.25em] mt-3.5">
-              SafeBreath Platform
-            </div>
-          </div>
-        </div>
-      )}
-
-      <Header 
-        currentSection={currentSection} 
-        onNavigate={handleNavigate} 
+    <div className="min-h-screen flex flex-col bg-white text-slate-900 selection:bg-emerald-600 selection:text-white font-sans antialiased">
+      <Header
+        currentSection={currentSection}
+        onNavigate={handleNavigate}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 w-full">
         <ProductPage onNavigate={handleNavigate} />
       </main>
 

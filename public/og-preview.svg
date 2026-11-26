@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F5F5F7" />
+      <stop offset="100%" stop-color="#FFFFFF" />
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect x="64" y="64" width="1072" height="502" rx="32" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="2" />
+
+  <!-- Shield Emblem -->
+  <g transform="translate(120, 148)">
+    <path d="M48 6 L90 22 V52 C90 79 71 101 48 110 C25 101 6 79 6 52 V22 Z" fill="url(#shieldGrad)" />
+    <path d="M29 58 H39 L45 42 L53 72 L59 54 H67" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <text x="240" y="186" font-family="Plus Jakarta Sans, -apple-system, BlinkMacSystemFont, sans-serif" font-size="22" font-weight="600" fill="#047857">SafeBreath V3 · Hardware Revision 2.8f</text>
+  <text x="120" y="308" font-family="Plus Jakarta Sans, -apple-system, BlinkMacSystemFont, sans-serif" font-size="54" font-weight="800" fill="#1D1D1F" letter-spacing="-1.2">Detect hidden gas hazards.</text>
+  <text x="120" y="374" font-family="Plus Jakarta Sans, -apple-system, BlinkMacSystemFont, sans-serif" font-size="54" font-weight="800" fill="#1D1D1F" letter-spacing="-1.2">Alert locally. Preserve evidence.</text>
+  <text x="120" y="438" font-family="DM Sans, -apple-system, BlinkMacSystemFont, sans-serif" font-size="24" fill="#6E6E73">ZE07-CO · MQ-135 VOC Indicator · MQ-6 LPG · DHT11 · SD_MMC + Supabase Telemetry</text>
+
+  <!-- Telemetry Pills -->
+  <g transform="translate(120, 480)" font-family="JetBrains Mono, monospace" font-size="16" font-weight="600">
+    <rect x="0" y="0" width="210" height="44" rx="22" fill="#ECFDF5" stroke="#A7F3D0" />
+    <text x="24" y="28" fill="#065F46">&lt;10 ms Decision</text>
+
+    <rect x="228" y="0" width="230" height="44" rx="22" fill="#F0F9FF" stroke="#BAE6FD" />
+    <text x="252" y="28" fill="#075985">3-Node MCU Core</text>
+
+    <rect x="476" y="0" width="250" height="44" rx="22" fill="#F5F5F7" stroke="#E5E5EA" />
+    <text x="500" y="28" fill="#1D1D1F">SD_MMC + Supabase</text>
+  </g>
+</svg>

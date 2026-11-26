@@ -1,23 +1,24 @@
-export type NavSection = 
+export type NavSection =
   | 'product'
-  | 'technology' 
-  | 'system' 
-  | 'safety' 
-  | 'data' 
+  | 'technology'
+  | 'system'
+  | 'safety'
+  | 'data'
   | 'app'
   | 'simulator';
 
-export type PageTab = 
+export type PageTab =
   | NavSection
-  | 'overview' 
-  | 'architecture' 
-  | 'safety-logic' 
-  | 'cloud-app' 
+  | 'overview'
+  | 'architecture'
+  | 'safety-logic'
+  | 'cloud-app'
   | 'calibration';
 
 export type GasType = 'CO' | 'VOC' | 'LPG';
 
 export type SafetyState = 'SAFE' | 'WARNING' | 'DANGER';
+export type SimulatorSafetyState = 'SAFE' | 'WARNING' | 'DANGER' | 'SENSOR FAULT' | 'STALE';
 
 export interface HardwareComponentInfo {
   id: string;
@@ -70,8 +71,11 @@ export interface SystemTelemetry {
 
 export interface BOMItem {
   component: string;
-  subsystem: 'Sensors' | 'Processing' | 'Gateway & Display' | 'Power & Passive';
+  subsystem: 'Sensors' | 'Processing' | 'Gateway & Display' | 'Power & Conditioning' | 'Experimental I/O';
   partNumber: string;
   estimatedCostUsd: number;
+  estimatedCostInr: number;
+  supplierRef: string;
+  status: 'Active Telemetry' | 'Hardware Core' | 'Experimental (GPIO Mapped)';
   purpose: string;
 }
