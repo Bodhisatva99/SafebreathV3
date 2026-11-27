@@ -7,6 +7,12 @@ import {
   VolumeX,
   HardDrive,
   Wifi,
+  ChevronUp,
+  ChevronDown,
+  Check,
+  BellOff,
+  CornerUpLeft,
+  Fingerprint,
 } from 'lucide-react';
 import { SimulatorSafetyState } from '../types';
 import { SafeBreathShieldSymbol } from './SafeBreathLogo';
@@ -66,6 +72,9 @@ export const PrecisionHardwareSimulator: React.FC = () => {
 
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [sequenceId, setSequenceId] = useState<number>(100);
+  const [ipsPage, setIpsPage] = useState<0 | 1 | 2>(0);
+  const [sirenMuted, setSirenMuted] = useState<boolean>(false);
+  const [lastTouchKey, setLastTouchKey] = useState<string>('Ready (5x TTP223 Idle)');
   const [csvLogs, setCsvLogs] = useState<string[]>([
     'timestamp,seq,co_ppm,voc_ind,lpg_ppm,temp_c,rh_pct,sim_state,crc16_ccitt',
   ]);
@@ -139,7 +148,7 @@ export const PrecisionHardwareSimulator: React.FC = () => {
   );
 
   useEffect(() => {
-    if (!soundEnabled) {
+    if (!soundEnabled || sirenMuted) {
       if (oscRef.current) {
         try {
           oscRef.current.stop();
@@ -194,7 +203,7 @@ export const PrecisionHardwareSimulator: React.FC = () => {
         oscRef.current = null;
       }
     };
-  }, [soundEnabled, isAlarmActive]);
+  }, [soundEnabled, sirenMuted, isAlarmActive]);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -229,6 +238,7 @@ export const PrecisionHardwareSimulator: React.FC = () => {
   const applyPreset = (preset: string) => {
     setSensorFault(false);
     setStaleTimeout(false);
+    setSirenMuted(false);
     switch (preset) {
       case 'nominal':
         updateCo(12);
@@ -272,6 +282,27 @@ export const PrecisionHardwareSimulator: React.FC = () => {
         break;
     }
   };
+
+  const handleTouchKey = (key: 'UP' | 'DOWN' | 'MENU' | 'MUTE' | 'BACK') => {
+    if (key === 'UP') {
+      setIpsPage((prev) => ((prev + 2) % 3) as 0 | 1 | 2);
+      setLastTouchKey('KEY 1 · UP (GPIO 34)');
+    } else if (key === 'DOWN') {
+      setIpsPage((prev) => ((prev + 1) % 3) as 0 | 1 | 2);
+      setLastTouchKey('KEY 2 · DOWN (GPIO 35)');
+    } else if (key === 'MENU') {
+      setIpsPage((prev) => ((prev + 1) % 3) as 0 | 1 | 2);
+      setLastTouchKey('KEY 3 · MENU/OK (GPIO 36)');
+    } else if (key === 'MUTE') {
+      setSirenMuted((prev) => !prev);
+      setLastTouchKey('KEY 4 · MUTE (GPIO 39)');
+    } else if (key === 'BACK') {
+      setIpsPage(0);
+      setLastTouchKey('KEY 5 · BACK (GPIO 14)');
+    }
+  };
+
+  const ipsPageLabels = ['PG 1/3 · LIVE GAS', 'PG 2/3 · DHT22 ENV', 'PG 3/3 · NODE & TOUCH'] as const;
 
   return (
     <div className="bg-[#F5F5F7] text-[#1D1D1F] rounded-[28px] border border-black/[0.06] p-5 sm:p-8 space-y-6">
@@ -515,71 +546,205 @@ export const PrecisionHardwareSimulator: React.FC = () => {
           </div>
         </div>
 
-        {/* Center: Simulated OLED Preview & Simulated Buzzer Decision */}
+        {/* Center: Simulated 1.3" ST7789 IPS Preview, 5x TTP223 Touch Keys & Simulated Buzzer Decision */}
         <div className="md:col-span-1 lg:col-span-5 space-y-5">
-          <div className="bg-white rounded-2xl border border-black/[0.06] p-5 space-y-3 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+          <div className="bg-white rounded-2xl border border-black/[0.06] p-5 space-y-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
             <div className="flex items-center justify-between text-xs font-mono text-[#6E6E73] pb-2 border-b border-black/[0.06]">
               <span className="flex items-center gap-2 text-[#1D1D1F] font-semibold">
                 <SafeBreathShieldSymbol size={16} />
-                OLED UI Preview (0.96&quot; SSD1306 Layout)
+                1.3&quot; ST7789 IPS Preview (240&times;240 SPI)
               </span>
-              <span>Simulated</span>
+              <span className="text-[11px] font-mono text-sky-700 font-semibold">{ipsPageLabels[ipsPage]}</span>
             </div>
 
-            <div className="bg-[#0A0F18] rounded-xl p-4 font-mono text-xs text-cyan-300 min-h-[190px] flex flex-col justify-between border border-slate-800">
-              <div className="flex items-center justify-between border-b border-cyan-500/30 pb-1 text-[11px]">
-                <span className="font-bold tracking-wider">SAFEBREATH Rev 2.8f</span>
-                <span className="text-[10px] text-cyan-400">SIMULATION</span>
+            {/* Simulated ST7789 RGB565 IPS Canvas */}
+            <div className="bg-[#090D16] rounded-xl p-4 font-mono text-xs text-slate-100 min-h-[205px] flex flex-col justify-between border-2 border-slate-800 shadow-inner">
+              <div className="flex items-center justify-between border-b border-white/10 pb-1.5 text-[11px]">
+                <span className="font-bold tracking-wider text-emerald-400">SAFEBREATH Rev 2.8f</span>
+                <div className="flex items-center gap-1.5">
+                  {sirenMuted && (
+                    <span className="text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-400/40 px-1.5 py-0.2 rounded">
+                      MUTED
+                    </span>
+                  )}
+                  <span className="text-[10px] text-sky-300">RGB565 SIM</span>
+                </div>
               </div>
 
               <div className="py-2 space-y-2">
                 {sensorFault ? (
-                  <div className="text-center py-3 text-rose-300 font-bold space-y-1">
-                    <div className="text-sm">*** SENSOR FAULT ***</div>
+                  <div className="text-center py-3 text-rose-300 font-bold space-y-1 bg-rose-950/50 rounded-lg border border-rose-500/40">
+                    <div className="text-sm text-rose-400">*** SENSOR FAULT ***</div>
                     <div className="text-[11px]">MQ-6 ADC=0 (OPEN CIRCUIT)</div>
-                    <div className="text-[10px] text-cyan-400">VERIFY WIRING INTEGRITY</div>
+                    <div className="text-[10px] text-amber-300">VERIFY WIRING INTEGRITY</div>
                   </div>
                 ) : staleTimeout ? (
-                  <div className="text-center py-3 text-amber-300 font-bold space-y-1">
-                    <div className="text-sm">*** COMM TIMEOUT ***</div>
+                  <div className="text-center py-3 text-amber-300 font-bold space-y-1 bg-amber-950/40 rounded-lg border border-amber-500/40">
+                    <div className="text-sm text-amber-400">*** COMM TIMEOUT ***</div>
                     <div className="text-[11px]">DATA AGE &gt; 3500 MS</div>
-                    <div className="text-[10px] text-cyan-400">WAITING NANO UART...</div>
+                    <div className="text-[10px] text-sky-300">WAITING NANO UART...</div>
                   </div>
-                ) : (
+                ) : ipsPage === 0 ? (
                   <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className={`p-2 rounded ${coState === 'DANGER' ? 'bg-cyan-400 text-black font-bold' : 'bg-slate-950 border border-slate-800'}`}>
-                      <div className={`text-[9px] ${coState === 'DANGER' ? 'text-black' : 'text-slate-400'}`}>CO ppm</div>
+                    <div
+                      className={`p-2 rounded-lg border ${
+                        coState === 'DANGER'
+                          ? 'bg-rose-600 text-white border-rose-400 font-bold'
+                          : coState === 'WARNING'
+                          ? 'bg-amber-500/20 text-amber-200 border-amber-400/50'
+                          : 'bg-slate-900 border-sky-500/30'
+                      }`}
+                    >
+                      <div className={`text-[9px] ${coState === 'DANGER' ? 'text-rose-100' : 'text-sky-400'}`}>CO ppm</div>
                       <div className="text-base font-bold tabular-nums">{coPpm}</div>
                     </div>
 
-                    <div className={`p-2 rounded ${vocState === 'DANGER' ? 'bg-cyan-400 text-black font-bold' : 'bg-slate-950 border border-slate-800'}`}>
-                      <div className={`text-[9px] ${vocState === 'DANGER' ? 'text-black' : 'text-slate-400'}`}>VOC ind</div>
+                    <div
+                      className={`p-2 rounded-lg border ${
+                        vocState === 'DANGER'
+                          ? 'bg-rose-600 text-white border-rose-400 font-bold'
+                          : vocState === 'WARNING'
+                          ? 'bg-amber-500/20 text-amber-200 border-amber-400/50'
+                          : 'bg-slate-900 border-emerald-500/30'
+                      }`}
+                    >
+                      <div className={`text-[9px] ${vocState === 'DANGER' ? 'text-rose-100' : 'text-emerald-400'}`}>VOC ind</div>
                       <div className="text-base font-bold tabular-nums">{vocPpm}</div>
                     </div>
 
-                    <div className={`p-2 rounded ${lpgState === 'DANGER' ? 'bg-cyan-400 text-black font-bold' : 'bg-slate-950 border border-slate-800'}`}>
-                      <div className={`text-[9px] ${lpgState === 'DANGER' ? 'text-black' : 'text-slate-400'}`}>LPG ppm</div>
+                    <div
+                      className={`p-2 rounded-lg border ${
+                        lpgState === 'DANGER'
+                          ? 'bg-rose-600 text-white border-rose-400 font-bold'
+                          : lpgState === 'WARNING'
+                          ? 'bg-amber-500/20 text-amber-200 border-amber-400/50'
+                          : 'bg-slate-900 border-amber-500/30'
+                      }`}
+                    >
+                      <div className={`text-[9px] ${lpgState === 'DANGER' ? 'text-rose-100' : 'text-amber-400'}`}>LPG ppm</div>
                       <div className="text-base font-bold tabular-nums">{lpgPpm}</div>
+                    </div>
+                  </div>
+                ) : ipsPage === 1 ? (
+                  <div className="grid grid-cols-2 gap-2.5 text-center">
+                    <div
+                      className={`p-2.5 rounded-lg border ${
+                        tempState === 'DANGER'
+                          ? 'bg-rose-600 text-white border-rose-400'
+                          : 'bg-slate-900 border-rose-500/30'
+                      }`}
+                    >
+                      <div className="text-[9px] text-rose-300">DHT22 TEMP (&plusmn;0.5&deg;C)</div>
+                      <div className="text-lg font-bold tabular-nums mt-0.5">{tempC}.0 &deg;C</div>
+                      <div className="text-[9px] text-slate-400">Latch &ge; 45&deg;C</div>
+                    </div>
+                    <div className="p-2.5 rounded-lg border bg-slate-900 border-indigo-500/30">
+                      <div className="text-[9px] text-indigo-300">DHT22 RH (&plusmn;2%)</div>
+                      <div className="text-lg font-bold tabular-nums mt-0.5">{humidity}.0 %</div>
+                      <div className="text-[9px] text-slate-400">Nano D2 Single-Wire</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg bg-slate-900 border border-white/10 p-2.5 space-y-1 text-[10px]">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">IPS SPI Bus:</span>
+                      <span className="text-sky-300">SCK18 MOSI19 DC4 RST15 CS21</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Touch Array:</span>
+                      <span className="text-emerald-300">5x TTP223 (34,35,36,39,14)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Frame CRC-16:</span>
+                      <span className="text-amber-300">{currentCrcHex} (Seq #{sequenceId})</span>
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center justify-between border-t border-cyan-500/30 pt-1 text-[10px]">
-                <span className="tabular-nums">T:{tempC}°C  H:{humidity}%</span>
+              <div className="flex items-center justify-between border-t border-white/10 pt-1.5 text-[10px]">
+                <span className="tabular-nums text-slate-300">DHT22 T:{tempC}&deg;C H:{humidity}%</span>
                 <span
-                  className={`font-bold px-1.5 rounded ${
+                  className={`font-bold px-2 py-0.5 rounded ${
                     overallState === 'DANGER'
-                      ? 'bg-cyan-400 text-black'
+                      ? 'bg-rose-600 text-white'
                       : overallState === 'SENSOR FAULT'
-                      ? 'text-rose-300'
+                      ? 'bg-rose-900/70 text-rose-200 border border-rose-500/40'
                       : overallState === 'WARNING' || overallState === 'STALE'
-                      ? 'text-amber-300'
-                      : 'text-cyan-400'
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40'
+                      : 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40'
                   }`}
                 >
                   [{overallState}]
                 </span>
+              </div>
+            </div>
+
+            {/* Interactive 5x TTP223 Capacitive Touch Keypad */}
+            <div className="pt-1 space-y-2">
+              <div className="flex items-center justify-between text-[11px] font-mono text-[#6E6E73]">
+                <span className="flex items-center gap-1.5 font-semibold text-[#1D1D1F]">
+                  <Fingerprint className="w-3.5 h-3.5 text-emerald-700" />
+                  5x TTP223 Touch Bezel
+                </span>
+                <span className="text-[10px] text-emerald-700 truncate max-w-[175px]">{lastTouchKey}</span>
+              </div>
+
+              <div className="grid grid-cols-5 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleTouchKey('UP')}
+                  className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#F5F5F7] hover:bg-black/[0.06] border border-black/[0.08] text-[#1D1D1F] transition-colors cursor-pointer"
+                  title="TTP223 #1 UP -> GPIO 34"
+                >
+                  <ChevronUp className="w-3.5 h-3.5" />
+                  <span className="text-[9px] font-mono font-bold mt-0.5">UP</span>
+                  <span className="text-[8px] font-mono text-[#86868B]">G34</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleTouchKey('DOWN')}
+                  className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#F5F5F7] hover:bg-black/[0.06] border border-black/[0.08] text-[#1D1D1F] transition-colors cursor-pointer"
+                  title="TTP223 #2 DOWN -> GPIO 35"
+                >
+                  <ChevronDown className="w-3.5 h-3.5" />
+                  <span className="text-[9px] font-mono font-bold mt-0.5">DOWN</span>
+                  <span className="text-[8px] font-mono text-[#86868B]">G35</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleTouchKey('MENU')}
+                  className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#F5F5F7] hover:bg-black/[0.06] border border-black/[0.08] text-[#1D1D1F] transition-colors cursor-pointer"
+                  title="TTP223 #3 MENU/OK -> GPIO 36"
+                >
+                  <Check className="w-3.5 h-3.5 text-emerald-700" />
+                  <span className="text-[9px] font-mono font-bold mt-0.5">MENU</span>
+                  <span className="text-[8px] font-mono text-[#86868B]">G36</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleTouchKey('MUTE')}
+                  className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl border transition-colors cursor-pointer ${
+                    sirenMuted
+                      ? 'bg-amber-50 border-amber-300 text-amber-900'
+                      : 'bg-[#F5F5F7] hover:bg-black/[0.06] border-black/[0.08] text-[#1D1D1F]'
+                  }`}
+                  title="TTP223 #4 MUTE -> GPIO 39"
+                >
+                  <BellOff className="w-3.5 h-3.5 text-amber-700" />
+                  <span className="text-[9px] font-mono font-bold mt-0.5">MUTE</span>
+                  <span className="text-[8px] font-mono text-[#86868B]">G39</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleTouchKey('BACK')}
+                  className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#F5F5F7] hover:bg-black/[0.06] border border-black/[0.08] text-[#1D1D1F] transition-colors cursor-pointer"
+                  title="TTP223 #5 BACK -> GPIO 14"
+                >
+                  <CornerUpLeft className="w-3.5 h-3.5" />
+                  <span className="text-[9px] font-mono font-bold mt-0.5">BACK</span>
+                  <span className="text-[8px] font-mono text-[#86868B]">G14</span>
+                </button>
               </div>
             </div>
           </div>
@@ -611,7 +776,9 @@ export const PrecisionHardwareSimulator: React.FC = () => {
                     Simulated Safety Decision · Browser Audio Preview
                   </div>
                   <h4 className="font-bold text-sm text-[#1D1D1F]">
-                    {isAlarmActive
+                    {sirenMuted && isAlarmActive
+                      ? 'Simulated Siren Silenced (TTP223 MUTE)'
+                      : isAlarmActive
                       ? 'Simulated Buzzer Activation (Web Audio)'
                       : isFaultActive
                       ? 'Simulated Hardware Fault Lockout'

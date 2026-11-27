@@ -475,7 +475,7 @@ export const LiveTelemetryExperience: React.FC<LiveTelemetryExperienceProps> = (
                 <span className="text-xs font-sans text-[#6E6E73] font-normal">°C</span>
               </div>
               <div className="text-[11px] text-[#6E6E73] mt-1.5 flex items-center justify-between">
-                <span>DHT11 (±2 °C)</span>
+                <span>DHT22 (±0.5 °C)</span>
                 {renderValidityChip(currentLog?.dht_valid)}
               </div>
             </div>
@@ -533,7 +533,7 @@ export const LiveTelemetryExperience: React.FC<LiveTelemetryExperienceProps> = (
                 <span className="text-xs font-sans text-[#6E6E73] font-normal">%</span>
               </div>
               <div className="text-[11px] text-[#6E6E73] mt-1.5 flex items-center justify-between">
-                <span>DHT11 RH (±5 %)</span>
+                <span>DHT22 RH (±2 %)</span>
                 {renderValidityChip(currentLog?.dht_valid)}
               </div>
             </div>

@@ -21,7 +21,7 @@
   <text x="240" y="186" font-family="Plus Jakarta Sans, -apple-system, BlinkMacSystemFont, sans-serif" font-size="22" font-weight="600" fill="#047857">SafeBreath V3 · Hardware Revision 2.8f</text>
   <text x="120" y="308" font-family="Plus Jakarta Sans, -apple-system, BlinkMacSystemFont, sans-serif" font-size="54" font-weight="800" fill="#1D1D1F" letter-spacing="-1.2">Detect hidden gas hazards.</text>
   <text x="120" y="374" font-family="Plus Jakarta Sans, -apple-system, BlinkMacSystemFont, sans-serif" font-size="54" font-weight="800" fill="#1D1D1F" letter-spacing="-1.2">Alert locally. Preserve evidence.</text>
-  <text x="120" y="438" font-family="DM Sans, -apple-system, BlinkMacSystemFont, sans-serif" font-size="24" fill="#6E6E73">ZE07-CO · MQ-135 VOC Indicator · MQ-6 LPG · DHT11 · SD_MMC + Supabase Telemetry</text>
+  <text x="120" y="438" font-family="DM Sans, -apple-system, BlinkMacSystemFont, sans-serif" font-size="24" fill="#6E6E73">ZE07-CO · MQ-135 VOC Ind. · MQ-6 LPG · DHT22 · 1.3&quot; ST7789 IPS + 5x Touch</text>
 
   <!-- Telemetry Pills -->
   <g transform="translate(120, 480)" font-family="JetBrains Mono, monospace" font-size="16" font-weight="600">

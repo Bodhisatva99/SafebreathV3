@@ -125,7 +125,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({ onNavigate }) => {
               </h1>
 
               <p className="text-base sm:text-lg text-[#6E6E73] leading-relaxed max-w-xl">
-                Autonomous multi-gas safety and atmospheric telemetry uniting electrochemical Carbon Monoxide (ZE07-CO), broad-response VOC trend sensing (MQ-135), combustible LPG detection (MQ-6), and ambient climate tracking (DHT11) with an offline &lt; 10 ms MCU decision target.
+                Autonomous multi-gas safety and atmospheric telemetry uniting electrochemical Carbon Monoxide (ZE07-CO), broad-response VOC trend sensing (MQ-135), combustible LPG detection (MQ-6), and precision ambient climate tracking (DHT22) with a 1.3&quot; ST7789 IPS color UI, 5x TTP223 capacitive touch controls, and an offline &lt; 10 ms MCU decision target.
               </p>
 
               <div className="flex flex-wrap items-center gap-3 pt-1">
@@ -349,7 +349,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({ onNavigate }) => {
                         <Volume2 className="w-3 h-3 text-rose-600 shrink-0" />
                         <span>ESP32 Master</span>
                       </div>
-                      <div className="text-[#6E6E73] text-[10px] mt-0.5 truncate">GPIO 4/15 · 13 · 33/32</div>
+                      <div className="text-[#6E6E73] text-[10px] mt-0.5 truncate">ST7789 SPI · Touch x5 · 13</div>
                     </div>
                     <div className="rounded-xl border border-black/[0.06] bg-white p-2.5">
                       <div className="font-bold text-[#1D1D1F] flex items-center gap-1">
@@ -379,9 +379,9 @@ export const ProductPage: React.FC<ProductPageProps> = ({ onNavigate }) => {
             </div>
 
             <div className="p-5 sm:p-6">
-              <div className="text-xs font-mono text-[#6E6E73]">Controller Isolation</div>
-              <div className="text-lg sm:text-xl font-bold text-[#1D1D1F] mt-1">3-Node Core</div>
-              <div className="text-xs text-[#86868B] mt-0.5">Nano + ESP32 DevKit + CAM</div>
+              <div className="text-xs font-mono text-[#6E6E73]">Controller &amp; Local UI</div>
+              <div className="text-lg sm:text-xl font-bold text-[#1D1D1F] mt-1">3-Node + Color IPS</div>
+              <div className="text-xs text-[#86868B] mt-0.5">1.3&quot; ST7789 SPI + 5x TTP223</div>
             </div>
 
             <div className="p-5 sm:p-6">
@@ -459,22 +459,22 @@ export const ProductPage: React.FC<ProductPageProps> = ({ onNavigate }) => {
             <div className="bg-[#F5F5F7] rounded-[28px] p-8 sm:p-9 space-y-2.5 border border-black/[0.04]">
               <div className="flex items-center justify-between text-xs font-mono text-amber-700 font-semibold">
                 <span>Ambient &amp; Experimental CT I/O</span>
-                <span>DHT11 (D2) · CT1/CT2 (33/32)</span>
+                <span>DHT22 (D2) · CT1/CT2 (33/32)</span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-bold text-[#1D1D1F]">Ambient Monitor &amp; CT Ports</h3>
+              <h3 className="text-xl sm:text-2xl font-bold text-[#1D1D1F]">Precision Climate &amp; CT Ports</h3>
               <p className="text-sm text-[#6E6E73] leading-relaxed">
-                Tracks ambient temperature (&ge; 45 °C latch, &plusmn;2 °C) and humidity via proprietary single-wire bus. Dual SCT-013-030 CT inputs (internal burden, 1.65V bias on GPIO 33/32) await cloud schema support.
+                Tracks -40 to +80 &deg;C ambient temperature (&ge; 45 &deg;C latch, &plusmn;0.5 &deg;C) and 0–100% RH (&plusmn;2 %) via single-wire bus. Dual SCT-013-030 CT inputs (internal burden, 1.65V bias on GPIO 33/32) await cloud schema support.
               </p>
             </div>
 
             <div className="bg-[#F5F5F7] rounded-[28px] p-8 sm:p-9 space-y-2.5 border border-black/[0.04]">
               <div className="flex items-center justify-between text-xs font-mono text-rose-700 font-semibold">
-                <span>Offline Acoustic &amp; Display</span>
-                <span>GPIO 13 Driver · GPIO 4/15 OLED</span>
+                <span>Offline IPS UI, Touch &amp; Siren</span>
+                <span>ST7789 SPI · 5x TTP223 · GPIO 13</span>
               </div>
               <h3 className="text-xl sm:text-2xl font-bold text-[#1D1D1F]">&lt; 10 ms MCU Decision Target</h3>
               <p className="text-sm text-[#6E6E73] leading-relaxed">
-                Autonomous ESP32 Schmitt-trigger hysteresis drives the TMB12A05 5V buzzer (85 dB @ 10 cm datasheet) through an NPN/MOSFET driver stage and SSD1306 OLED offline.
+                Autonomous ESP32 Schmitt-trigger hysteresis drives the TMB12A05 5V buzzer (85 dB @ 10 cm datasheet) via NPN/MOSFET driver, renders a 1.3&quot; 240&times;240 ST7789 color IPS LCD, and reads 5x TTP223 touch keys (GPIO 34, 35, 36, 39, 14) offline.
               </p>
             </div>
           </div>
@@ -484,7 +484,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({ onNavigate }) => {
             <div className="space-y-1">
               <div className="text-xs font-mono font-semibold text-emerald-700">01 · Sense</div>
               <div className="text-sm font-bold text-[#1D1D1F]">Electrochemical &amp; SnO2</div>
-              <p className="text-xs text-[#6E6E73]">ZE07-CO, MQ-135, MQ-6, DHT11</p>
+              <p className="text-xs text-[#6E6E73]">ZE07-CO, MQ-135, MQ-6, DHT22</p>
             </div>
             <div className="space-y-1">
               <div className="text-xs font-mono font-semibold text-emerald-700">02 · Sample</div>
@@ -499,7 +499,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({ onNavigate }) => {
             <div className="space-y-1">
               <div className="text-xs font-mono font-semibold text-emerald-700">04 · Respond</div>
               <div className="text-sm font-bold text-[#1D1D1F]">85 dB @ 10 cm Siren</div>
-              <p className="text-xs text-[#6E6E73]">GPIO 13 NPN/FET + OLED</p>
+              <p className="text-xs text-[#6E6E73]">1.3&quot; ST7789 + GPIO 13 + 5x Touch</p>
             </div>
             <div className="col-span-2 sm:col-span-1 space-y-1">
               <div className="text-xs font-mono font-semibold text-emerald-700">05 · Archive</div>
@@ -520,7 +520,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({ onNavigate }) => {
                 </h3>
               </div>
               <div className="text-xs font-mono text-[#6E6E73]">
-                Prototype ₹5,270 · Batch Est. ₹3,450 · Nov 2026 INR Basis
+                Prototype &#8377;{ECONOMICS_SUMMARY.completePrototypeInr.toLocaleString('en-IN')} · Batch Est. &#8377;{ECONOMICS_SUMMARY.batchProductionTargetInr.toLocaleString('en-IN')} · Nov 2026 INR Basis
               </div>
             </div>
 

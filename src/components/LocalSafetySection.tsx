@@ -68,7 +68,7 @@ export const LocalSafetySection: React.FC = () => {
           <div className="pt-4 border-t border-black/[0.06] text-xs text-[#6E6E73] leading-relaxed flex items-start gap-2.5">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
             <span>
-              <strong className="text-[#1D1D1F]">Zero Internet Dependency:</strong> Continues sounding the local acoustic siren and updating the OLED screen even if Wi-Fi is completely offline.
+              <strong className="text-[#1D1D1F]">Zero Internet Dependency:</strong> Continues sounding the local acoustic siren, updating the 1.3&quot; ST7789 IPS display, and staying responsive to the 5x TTP223 capacitive touch mute/nav keys even if Wi-Fi is completely offline.
             </span>
           </div>
         </div>

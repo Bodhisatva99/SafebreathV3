@@ -62,9 +62,9 @@ const VALIDATION_PROTOCOLS: ValidationTestItem[] = [
   {
     id: 'VAL-07',
     category: 'Fail-Safe & Cloud',
-    title: 'Wi-Fi-Disabled Local Alarm Run',
+    title: 'Wi-Fi-Disabled Local Alarm & Touch UI Run',
     apparatus: 'Router powered off; inject CO > 70 ppm / LPG > 1,500 ppm at sensor head',
-    acceptanceTarget: 'GPIO 13 buzzer latches & OLED shows DANGER without Wi-Fi or router lease',
+    acceptanceTarget: 'GPIO 13 buzzer latches, 1.3" ST7789 IPS shows DANGER & 5x TTP223 MUTE/menu responds offline',
     status: 'Pending Physical Run',
   },
   {
@@ -79,8 +79,8 @@ const VALIDATION_PROTOCOLS: ValidationTestItem[] = [
     id: 'VAL-09',
     category: 'Fail-Safe & Cloud',
     title: 'Fault & Open-Circuit Injection',
-    apparatus: 'Unplug Nano A0/A1, pull ZE07 RX/TX, and inject corrupt DHT11 checksum',
-    acceptanceTarget: 'OLED & dashboard report SENSOR FAULT; never misclassify as NORMAL',
+    apparatus: 'Unplug Nano A0/A1, pull ZE07 RX/TX, and inject corrupt DHT22 checksum',
+    acceptanceTarget: '1.3" ST7789 IPS & dashboard report SENSOR FAULT; never misclassify as NORMAL',
     status: 'Pending Physical Run',
   },
   {
@@ -96,15 +96,15 @@ const VALIDATION_PROTOCOLS: ValidationTestItem[] = [
 const MEDIA_CHECKLIST = [
   {
     title: '1. Completed Assembly Photo',
-    detail: 'High-resolution photograph of vented physical enclosure, SSD1306 OLED readout, and external gas inlets.',
+    detail: 'High-resolution photograph of vented physical enclosure, 1.3" ST7789 IPS readout, 5x TTP223 touch bezel, and external gas inlets.',
   },
   {
     title: '2. Internal Wiring Harness Photo',
-    detail: 'Clear view of ESP32 DevKit V1, Arduino Nano (1k/2k divider), ESP32-CAM SD_MMC bus, and sensor headers.',
+    detail: 'Clear view of ESP32 DevKit V1, Arduino Nano (1k/2k divider), ESP32-CAM SD_MMC bus, ST7789 SPI harness, and sensor headers.',
   },
   {
     title: '3. 60-Second Continuous Proof Video',
-    detail: 'Uncut clip demonstrating Wi-Fi disabled, live OLED concentration updates, threshold alarm latching, and SD logging.',
+    detail: 'Uncut clip demonstrating Wi-Fi disabled, live 1.3" ST7789 IPS updates, 5-key TTP223 menu/mute control, alarm latching, and SD logging.',
   },
 ];
 

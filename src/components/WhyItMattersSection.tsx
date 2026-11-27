@@ -141,7 +141,7 @@ export const WhyItMattersSection: React.FC<WhyItMattersSectionProps> = ({
       methodologyDetails:
         'According to the updated WHO Burns Fact Sheet (Oct 21, 2026), an estimated 163,000 deaths occurred globally in 2023 due to exposure to fire, heat, and hot substances.',
       safeBreathConnection:
-        'SafeBreath monitors ambient temperature (±2 °C via DHT11) alongside MQ-6 combustible gas sensing as an auxiliary heat indicator—not as a certified standalone fire detector.',
+        'SafeBreath monitors ambient temperature (±0.5 °C via DHT22) alongside MQ-6 combustible gas sensing as an auxiliary heat indicator—not as a certified standalone fire detector.',
       accentColor: 'text-rose-700',
     },
   ];

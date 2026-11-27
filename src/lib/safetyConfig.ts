@@ -290,7 +290,7 @@ export function evaluateTelemetrySafety(
     if (row.co_valid === false) faults.push('ZE07-CO invalid');
     if (row.voc_valid === false) faults.push('MQ-135 invalid');
     if (row.lpg_valid === false) faults.push('MQ-6 invalid');
-    if (row.dht_valid === false) faults.push('DHT11 invalid');
+    if (row.dht_valid === false) faults.push('DHT22 invalid');
     if (row.nano_online === false) faults.push('Nano offline');
     if (row.ze07_online === false) faults.push('ZE07 UART offline');
     if (!hasFiniteReadings) faults.push('Non-finite sensor reading(s)');

@@ -1,26 +1,14 @@
 import React, { useState } from 'react';
-import { 
-  Cpu, 
-  Layers, 
-  Zap, 
-  Activity, 
-  Maximize2, 
-  Minimize2, 
-  ZoomIn, 
-  ZoomOut, 
-  RotateCcw, 
-  Info, 
-  CheckCircle2, 
-  Volume2, 
-  Monitor, 
-  HardDrive, 
-  Wifi, 
-  Camera, 
-  SlidersHorizontal,
-  ExternalLink
+import {
+  Zap,
+  Maximize2,
+  Minimize2,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
 } from 'lucide-react';
 
-type WireNet = 'all' | 'power' | 'uart' | 'i2c' | 'spi' | 'analog' | 'digital';
+type WireNet = 'all' | 'power' | 'uart' | 'spi' | 'analog' | 'digital';
 
 interface PinConnection {
   pin: string;
@@ -47,35 +35,33 @@ interface CircuitComponent {
 
 export const CircuitDiagramViewer: React.FC = () => {
   const [activeNet, setActiveNet] = useState<WireNet>('all');
-  const [selectedCompId, setSelectedCompId] = useState<string>('arduino-nano');
+  const [selectedCompId, setSelectedCompId] = useState<string>('esp32');
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
-  // Components based strictly on SafeBreath V3 Hardware Rev 2.8f Pinout
+  // Components based strictly on upgraded SafeBreath V3 Hardware Rev 2.8f Pinout
   const components: CircuitComponent[] = [
     {
       id: 'esp32',
       name: 'ESP32 DevKit V1 (Dev Master)',
-      type: 'Central Safety & Master Controller',
+      type: 'Central Safety, SPI Display & 5-Key Touch Master',
       voltage: '3.3V Logic / 5V VIN',
-      role: 'Master safety controller: reads direct ZE07-CO UART (GPIO 16/17), receives Nano telemetry (GPIO 23/22), drives OLED (GPIO 4/15), sounds alarm (GPIO 13), samples CT1/CT2 (GPIO 33/32), and bridges to CAM gateway.',
+      role: 'Master safety controller: reads direct ZE07-CO UART (GPIO 16/17), receives Nano telemetry (GPIO 23/22), renders 1.3" ST7789 SPI IPS (GPIO 18/19/4/15/21), scans 5x TTP223 touch keys (GPIO 34/35/36/39/14), sounds alarm (GPIO 13), samples CT1/CT2 (GPIO 33/32), and bridges to CAM gateway.',
       x: 340,
       y: 170,
       width: 250,
       height: 330,
       pins: [
-        { pin: 'GPIO 4', label: 'I2C SDA', targetComponent: 'oled', targetPin: 'SDA', voltage: '3.3V I2C', net: 'i2c', note: 'SSD1306 OLED display data line' },
-        { pin: 'GPIO 15', label: 'I2C SCL', targetComponent: 'oled', targetPin: 'SCL', voltage: '3.3V I2C', net: 'i2c', note: 'SSD1306 OLED display clock line' },
+        { pin: 'GPIO 18 / 19', label: 'ST7789 SPI SCK / MOSI', targetComponent: 'st7789', targetPin: 'SCL / SDA', voltage: '3.3V SPI', net: 'spi', note: 'High-speed SPI bus driving 1.3" 240x240 IPS TFT' },
+        { pin: 'GPIO 4 / 15 / 21', label: 'ST7789 DC / RST / CS', targetComponent: 'st7789', targetPin: 'DC / RES / CS', voltage: '3.3V SPI Ctrl', net: 'spi', note: 'Display register select, hardware reset & chip select' },
+        { pin: 'GPIO 34, 35, 36, 39', label: 'TTP223 Keys 1–4', targetComponent: 'ttp223', targetPin: 'UP, DOWN, OK, MUTE', voltage: '3.3V Push-Pull', net: 'digital', note: 'Upgraded capacitive touch inputs on dedicated ESP32 input-only GPIOs' },
+        { pin: 'GPIO 14', label: 'TTP223 Key 5', targetComponent: 'ttp223', targetPin: 'BACK / RESET', voltage: '3.3V Digital', net: 'digital', note: '5th capacitive touch key for menu back & threshold audit' },
         { pin: 'GPIO 13', label: 'Buzzer Driver Gate', targetComponent: 'buzzer', targetPin: 'NPN/MOSFET Stage', voltage: '3.3V Logic -> 5V Switch', net: 'digital', note: 'Drives low-side NPN/MOSFET switch powered from 5V rail (not direct GPIO drive)' },
-        { pin: 'GPIO 33', label: 'CT1 ADC (Experimental)', targetComponent: 'ct-sensors', targetPin: 'SCT-013-030 + 1.65V Bias', voltage: '0–3.3V Biased AC', net: 'analog', note: 'SCT-013-030 (30A/1V) has built-in burden; use 1.65V DC bias only (cloud schema pending)' },
-        { pin: 'GPIO 32', label: 'CT2 ADC (Experimental)', targetComponent: 'ct-sensors', targetPin: 'SCT-013-030 + 1.65V Bias', voltage: '0–3.3V Biased AC', net: 'analog', note: 'SCT-013-030 (30A/1V) has built-in burden; use 1.65V DC bias only (cloud schema pending)' },
-        { pin: 'GPIO 23', label: 'Nano UART RX', targetComponent: 'arduino-nano', targetPin: 'TX (D1) via 1kΩ/2kΩ', voltage: '3.3V UART', net: 'uart', note: 'Receives 5V->3.3V divider-shifted Nano Frame (MQ-135, MQ-6, DHT11)' },
-        { pin: 'GPIO 22', label: 'Nano UART TX', targetComponent: 'arduino-nano', targetPin: 'RX (D0)', voltage: '3.3V UART', net: 'uart', note: 'Transmits sync commands to Arduino Nano' },
-        { pin: 'GPIO 16', label: 'ZE07-CO UART RX', targetComponent: 'ze07-co', targetPin: 'TXD', voltage: '3.3V UART', net: 'uart', note: 'Direct electrochemical CO UART frames (T90 <= 60s)' },
-        { pin: 'GPIO 17', label: 'ZE07-CO UART TX', targetComponent: 'ze07-co', targetPin: 'RXD', voltage: '3.3V UART', net: 'uart', note: 'Sensor mode configuration and calibration query' },
+        { pin: 'GPIO 33 / 32', label: 'CT1 / CT2 ADC (Exp.)', targetComponent: 'ct-sensors', targetPin: 'SCT-013-030 + 1.65V Bias', voltage: '0–3.3V Biased AC', net: 'analog', note: 'SCT-013-030 (30A/1V) has built-in burden; use 1.65V DC bias only (cloud schema pending)' },
+        { pin: 'GPIO 23 / 22', label: 'Nano UART RX / TX', targetComponent: 'arduino-nano', targetPin: 'D1 (1k/2k Div) / D0', voltage: '3.3V UART', net: 'uart', note: 'Receives 5V->3.3V divider-shifted Nano Frame (MQ-135, MQ-6, DHT22)' },
+        { pin: 'GPIO 16 / 17', label: 'ZE07-CO UART2 RX / TX', targetComponent: 'ze07-co', targetPin: 'TXD / RXD', voltage: '3.3V UART', net: 'uart', note: 'Direct electrochemical CO UART frames (T90 <= 60s)' },
         { pin: 'UART Bridge', label: 'Gateway Serial', targetComponent: 'esp32-cam', targetPin: 'Dev UART', voltage: '3.3V UART', net: 'uart', note: 'Carries Unified 16-Byte Master-to-Gateway Frame (avoid USB UART0 overlap in prod PCB)' },
-        { pin: 'VIN (5V)', label: '5V Power Input', targetComponent: 'power-rail', targetPin: '5V BUS', voltage: '+5.0V Regulated', net: 'power' },
-        { pin: 'GND', label: 'Common GND', targetComponent: 'power-rail', targetPin: 'GND BUS', voltage: '0V Reference', net: 'power' }
+        { pin: 'VIN / GND', label: 'Power & Common Ground', targetComponent: 'power-rail', targetPin: '5V / GND BUS', voltage: '+5.0V / 0V', net: 'power' }
       ]
     },
     {
@@ -83,7 +69,7 @@ export const CircuitDiagramViewer: React.FC = () => {
       name: 'Arduino Nano (ATmega328P)',
       type: 'Dedicated Sensor Acquisition MCU',
       voltage: '5V DC Logic',
-      role: 'Continuous analog sampling of MQ-135 (A0) and MQ-6 (A1), single-wire DHT11 (D2) decode, and Nano Sensor Frame UART streaming via 1kΩ/2kΩ divider to ESP32 master.',
+      role: 'Continuous analog sampling of MQ-135 (A0) and MQ-6 (A1), single-wire DHT22 (D2) decode, and Nano Sensor Frame UART streaming via 1kΩ/2kΩ divider to ESP32 master.',
       x: 40,
       y: 190,
       width: 220,
@@ -91,7 +77,7 @@ export const CircuitDiagramViewer: React.FC = () => {
       pins: [
         { pin: 'A0', label: 'ADC0 Analog In', targetComponent: 'mq-135', targetPin: 'AO', voltage: '0-5V Analog', net: 'analog', note: 'MQ-135 broad-response VOC indicator' },
         { pin: 'A1', label: 'ADC1 Analog In', targetComponent: 'mq-6', targetPin: 'AO', voltage: '0-5V Analog', net: 'analog', note: 'MQ-6 LPG/propane analog voltage' },
-        { pin: 'D2', label: 'Proprietary Single-Wire', targetComponent: 'dht11', targetPin: 'DATA', voltage: '5V Digital', net: 'digital', note: 'Proprietary single-wire DHT11 bus (not Dallas 1-Wire) with 4.7kΩ pull-up' },
+        { pin: 'D2', label: 'Proprietary Single-Wire', targetComponent: 'dht22', targetPin: 'DATA', voltage: '5V Digital', net: 'digital', note: 'Proprietary single-wire DHT22 bus (not Dallas 1-Wire) with 4.7kΩ pull-up' },
         { pin: 'TX (D1)', label: 'Hardware UART TX', targetComponent: 'esp32', targetPin: 'GPIO 23 via 1k/2k Divider', voltage: '5V -> 3.33V Divider', net: 'uart', note: 'Routed through explicit 1kΩ/2kΩ voltage divider to protect ESP32 GPIO 23' },
         { pin: 'RX (D0)', label: 'Hardware UART RX', targetComponent: 'esp32', targetPin: 'GPIO 22', voltage: '3.3V Logic HIGH', net: 'uart', note: 'Receives heartbeat synchronization from ESP32' },
         { pin: '5V', label: 'Power Rail', targetComponent: 'power-rail', targetPin: '5V BUS', voltage: '+5.0V Regulated', net: 'power' },
@@ -105,16 +91,33 @@ export const CircuitDiagramViewer: React.FC = () => {
       voltage: '5V Supply',
       role: 'Receives Unified 16-Byte Master Frame from ESP32 Dev Master via Hardware Serial. Manages circular FAT32 logging via SD_MMC and Wi-Fi sync to Supabase. OV2640 camera disabled in Rev 2.8f.',
       x: 650,
-      y: 200,
-      width: 210,
-      height: 250,
+      y: 205,
+      width: 215,
+      height: 155,
       pins: [
         { pin: 'Dev UART', label: 'Hardware Serial', targetComponent: 'esp32', targetPin: 'Gateway Serial', voltage: '3.3V UART', net: 'uart', note: 'Dedicated UART avoids USB UART0 programming conflict' },
         { pin: 'SD_MMC', label: 'MicroSD Bus', targetComponent: 'internal', targetPin: 'MicroSD Slot', voltage: '3.3V SD Bus', net: 'spi', note: '4-bit SD_MMC circular CSV local logging' },
         { pin: 'Wi-Fi', label: '802.11 b/g/n RF', targetComponent: 'cloud', targetPin: 'Supabase Realtime', voltage: 'Internal RF', net: 'digital', note: 'Cloud database synchronization' },
         { pin: 'Camera', label: 'OV2640 Interface', targetComponent: 'internal', targetPin: 'Disabled', voltage: 'N/A', net: 'digital', note: 'Powered off in Rev 2.8f firmware to protect heap/SD reliability' },
-        { pin: '5V', label: 'Power Input', targetComponent: 'power-rail', targetPin: '5V BUS', voltage: '+5V', net: 'power' },
-        { pin: 'GND', label: 'Common GND', targetComponent: 'power-rail', targetPin: 'GND BUS', voltage: '0V', net: 'power' }
+        { pin: '5V / GND', label: 'Power Input', targetComponent: 'power-rail', targetPin: '5V / GND BUS', voltage: '+5V / 0V', net: 'power' }
+      ]
+    },
+    {
+      id: 'ttp223',
+      name: '5x TTP223 Capacitive Touch Keys',
+      type: 'Upgraded 5-Key Operator HMI (From 2 Keys)',
+      voltage: '3.3V Push-Pull CMOS',
+      role: 'Five capacitive touch modules (UP, DOWN, MENU/OK, MUTE, BACK) powered at 3.3V so HIGH signals interface cleanly to ESP32 GPIOs 34, 35, 36, 39, and 14.',
+      x: 650,
+      y: 380,
+      width: 215,
+      height: 120,
+      pins: [
+        { pin: 'KEY 1 (UP)', label: 'Menu Navigation Up', targetComponent: 'esp32', targetPin: 'GPIO 34', voltage: '3.3V Active HIGH', net: 'digital' },
+        { pin: 'KEY 2 (DOWN)', label: 'Menu Navigation Down', targetComponent: 'esp32', targetPin: 'GPIO 35', voltage: '3.3V Active HIGH', net: 'digital' },
+        { pin: 'KEY 3 (MENU/OK)', label: 'Select / Threshold View', targetComponent: 'esp32', targetPin: 'GPIO 36 (VP)', voltage: '3.3V Active HIGH', net: 'digital' },
+        { pin: 'KEY 4 (MUTE)', label: 'Silence / Acknowledge Siren', targetComponent: 'esp32', targetPin: 'GPIO 39 (VN)', voltage: '3.3V Active HIGH', net: 'digital' },
+        { pin: 'KEY 5 (BACK)', label: 'Return / Exit Screen', targetComponent: 'esp32', targetPin: 'GPIO 14', voltage: '3.3V Active HIGH', net: 'digital' }
       ]
     },
     {
@@ -167,17 +170,17 @@ export const CircuitDiagramViewer: React.FC = () => {
       ]
     },
     {
-      id: 'dht11',
-      name: 'DHT11 Ambient Temp & Humidity',
-      type: 'Polymer Resistive RH & NTC Probe',
+      id: 'dht22',
+      name: 'DHT22 (AM2302) Climate Probe',
+      type: 'Capacitive RH & Precision NTC Sensor',
       voltage: '3.3V - 5.5V',
-      role: 'Monitors ambient temperature (0–50 °C ±2 °C) and relative humidity over proprietary single-wire digital protocol (ambient monitoring only).',
+      role: 'Precision ambient temperature (-40 to +80 °C ±0.5 °C) and relative humidity (0–100 % RH ±2 %) over proprietary single-wire protocol (upgraded from DHT11).',
       x: 40,
       y: 610,
       width: 220,
       height: 105,
       pins: [
-        { pin: 'DATA', label: 'Proprietary Single-Wire', targetComponent: 'arduino-nano', targetPin: 'D2', voltage: '5V Digital', net: 'digital', note: '4.7kΩ pull-up to 5V; not Dallas 1-Wire' },
+        { pin: 'DATA', label: 'Proprietary Single-Wire', targetComponent: 'arduino-nano', targetPin: 'D2', voltage: '5V Digital', net: 'digital', note: '4.7kΩ pull-up to 5V; not Dallas 1-Wire (0.5 Hz sample rate)' },
         { pin: 'VCC', label: 'Power', targetComponent: 'power-rail', targetPin: '5V BUS', voltage: '+5V', net: 'power' },
         { pin: 'GND', label: 'Ground', targetComponent: 'power-rail', targetPin: 'GND BUS', voltage: '0V', net: 'power' }
       ]
@@ -199,19 +202,19 @@ export const CircuitDiagramViewer: React.FC = () => {
       ]
     },
     {
-      id: 'oled',
-      name: '0.96" I2C OLED Display (SSD1306)',
-      type: 'Local Graphic Telemetry Screen',
-      voltage: '3.3V - 5V',
-      role: '128x64 monochrome OLED providing instantaneous on-device concentration readouts driven by ESP32 on GPIO 4 (SDA) and GPIO 15 (SCL).',
+      id: 'st7789',
+      name: '1.3" ST7789 IPS Color Display',
+      type: '240x240 SPI TFT Telemetry Screen',
+      voltage: '3.3V Logic & Backlight',
+      role: 'Full-color 240x240 IPS TFT replacing the 0.96" OLED, connected via ESP32 SPI (SCK 18, MOSI 19, DC 4, RST 15, CS 21).',
       x: 650,
       y: 40,
-      width: 210,
-      height: 125,
+      width: 215,
+      height: 135,
       pins: [
-        { pin: 'SDA', label: 'I2C Data', targetComponent: 'esp32', targetPin: 'GPIO 4', voltage: '3.3V I2C', net: 'i2c', note: 'Connected to ESP32 GPIO 4' },
-        { pin: 'SCL', label: 'I2C Clock', targetComponent: 'esp32', targetPin: 'GPIO 15', voltage: '3.3V I2C', net: 'i2c', note: 'Connected to ESP32 GPIO 15' },
-        { pin: 'VCC', label: 'Power', targetComponent: 'power-rail', targetPin: '5V BUS', voltage: '+5V / +3.3V', net: 'power' },
+        { pin: 'SCL / SDA', label: 'SPI SCK / MOSI', targetComponent: 'esp32', targetPin: 'GPIO 18 / 19', voltage: '3.3V SPI', net: 'spi', note: 'High-speed SPI clock & data' },
+        { pin: 'DC / RES / CS', label: 'Display Control', targetComponent: 'esp32', targetPin: 'GPIO 4 / 15 / 21', voltage: '3.3V SPI Ctrl', net: 'spi', note: 'Command/Data, Reset & Chip Select' },
+        { pin: 'VCC / BLK', label: '3.3V Supply & Backlight', targetComponent: 'power-rail', targetPin: '3.3V BUS', voltage: '+3.3V', net: 'power' },
         { pin: 'GND', label: 'Ground', targetComponent: 'power-rail', targetPin: 'GND BUS', voltage: '0V', net: 'power' }
       ]
     },
@@ -222,8 +225,8 @@ export const CircuitDiagramViewer: React.FC = () => {
       voltage: '5V Supply (3.3V Gate)',
       role: 'Audible emergency alarm (85 dB @ 10 cm datasheet rating). Powered from 5V rail and switched via NPN/MOSFET driver controlled by ESP32 GPIO 13.',
       x: 650,
-      y: 480,
-      width: 210,
+      y: 525,
+      width: 215,
       height: 110,
       pins: [
         { pin: '(+)', label: '5V Switched via NPN', targetComponent: 'esp32', targetPin: 'GPIO 13 -> Driver', voltage: '5V Switched', net: 'digital', note: 'Transistor driver isolates 5V buzzer current from GPIO 13' },
@@ -234,23 +237,10 @@ export const CircuitDiagramViewer: React.FC = () => {
 
   const selectedComp = components.find(c => c.id === selectedCompId) || components[0];
 
-  const getNetColor = (net: WireNet) => {
-    switch (net) {
-      case 'power': return '#ef4444'; // Red for 5V / 3.3V
-      case 'uart': return '#f59e0b'; // Amber for Serial
-      case 'i2c': return '#06b6d4'; // Cyan for I2C
-      case 'spi': return '#8b5cf6'; // Violet for SPI
-      case 'analog': return '#10b981'; // Emerald for Analog ADC
-      case 'digital': return '#3b82f6'; // Blue for Digital
-      default: return '#64748b';
-    }
-  };
-
   const getNetBadge = (net: WireNet) => {
     switch (net) {
       case 'power': return 'bg-red-50 text-red-700 border-red-200';
       case 'uart': return 'bg-amber-50 text-amber-800 border-amber-200';
-      case 'i2c': return 'bg-cyan-50 text-cyan-800 border-cyan-200';
       case 'spi': return 'bg-purple-50 text-purple-800 border-purple-200';
       case 'analog': return 'bg-emerald-50 text-emerald-800 border-emerald-200';
       case 'digital': return 'bg-blue-50 text-blue-800 border-blue-200';
@@ -274,7 +264,7 @@ export const CircuitDiagramViewer: React.FC = () => {
             Circuit Diagram &amp; Pin Routing Matrix
           </h3>
           <p className="text-xs sm:text-sm text-slate-600">
-            Physical wiring, inter-controller UART serial buses, I2C display lines, dual CT inputs, and SD_MMC storage.
+            Physical wiring featuring DHT22 climate probe, 1.3&quot; ST7789 SPI display, 5x TTP223 touch array, dual CT inputs, and SD_MMC logging.
           </p>
         </div>
 
@@ -327,17 +317,16 @@ export const CircuitDiagramViewer: React.FC = () => {
           { id: 'all', label: 'All Interconnects', color: 'bg-slate-900 text-white' },
           { id: 'power', label: '5V / 3.3V Power & GND', color: 'bg-red-600 text-white' },
           { id: 'analog', label: 'Analog ADC (A0, A1, CT1/2)', color: 'bg-emerald-600 text-white' },
-          { id: 'uart', label: 'UART Serial (Nano ↔ ESP32)', color: 'bg-amber-600 text-white' },
-          { id: 'i2c', label: 'I2C Bus (GPIO 4/15 OLED)', color: 'bg-cyan-700 text-white' },
-          { id: 'spi', label: 'SD_MMC (ESP32-CAM MicroSD)', color: 'bg-purple-700 text-white' },
-          { id: 'digital', label: 'Digital (DHT11 D2, Buzzer GPIO 13)', color: 'bg-blue-600 text-white' }
+          { id: 'uart', label: 'UART Serial (Nano ↔ ESP32 ↔ CAM)', color: 'bg-amber-600 text-white' },
+          { id: 'spi', label: 'SPI (ST7789 IPS) & SD_MMC', color: 'bg-purple-700 text-white' },
+          { id: 'digital', label: 'Digital (DHT22 D2, 5x Touch, Buzzer GPIO 13)', color: 'bg-blue-600 text-white' }
         ].map((net) => (
           <button
             key={net.id}
             onClick={() => setActiveNet(net.id as WireNet)}
             className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
-              activeNet === net.id 
-                ? `${net.color} shadow-sm font-semibold` 
+              activeNet === net.id
+                ? `${net.color} shadow-sm font-semibold`
                 : 'text-slate-600 hover:text-slate-900 hover:bg-white'
             }`}
           >
@@ -348,10 +337,10 @@ export const CircuitDiagramViewer: React.FC = () => {
 
       {/* Main Schematic CAD Surface & Pin Inspector */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
+
         {/* Left: Vector CAD Circuit Schematic Canvas (8 Cols) */}
         <div className="lg:col-span-8 bg-[#070b14] rounded-2xl border border-slate-800 p-4 sm:p-6 shadow-xl relative overflow-hidden">
-          
+
           {/* Schematic Title Block */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400 pb-3 mb-3 border-b border-slate-800 font-mono">
             <div className="flex items-center gap-2">
@@ -370,7 +359,7 @@ export const CircuitDiagramViewer: React.FC = () => {
 
           {/* Scalable SVG Schematic Layout */}
           <div className="overflow-x-auto pb-2">
-            <div 
+            <div
               className="min-w-[900px] h-[740px] relative transition-transform origin-top-left"
               style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}
             >
@@ -384,8 +373,6 @@ export const CircuitDiagramViewer: React.FC = () => {
 
                 <rect width="100%" height="100%" fill="url(#cad-grid)" />
 
-                {/* Net Trace Lines for Rev 2.8f Pinout */}
-                
                 {/* 1. MQ-135 AO to Arduino Nano A0 */}
                 {(activeNet === 'all' || activeNet === 'analog') && (
                   <g className="transition-opacity">
@@ -404,12 +391,12 @@ export const CircuitDiagramViewer: React.FC = () => {
                   </g>
                 )}
 
-                {/* 3. DHT11 Data to Arduino Nano D2 */}
+                {/* 3. DHT22 Data to Arduino Nano D2 */}
                 {(activeNet === 'all' || activeNet === 'digital') && (
                   <g className="transition-opacity">
                     <path d="M 80 610 L 80 460" fill="none" stroke="#3b82f6" strokeWidth="2" strokeDasharray="4 2" />
                     <circle cx="80" cy="535" r="3" fill="#3b82f6" />
-                    <text x="86" y="540" fill="#3b82f6" fontSize="10" fontFamily="monospace">DATA → Nano D2</text>
+                    <text x="86" y="540" fill="#3b82f6" fontSize="10" fontFamily="monospace">DHT22 DATA → D2</text>
                   </g>
                 )}
 
@@ -437,27 +424,36 @@ export const CircuitDiagramViewer: React.FC = () => {
                   </g>
                 )}
 
-                {/* 6. ESP32 I2C OLED (GPIO 4 SDA / GPIO 15 SCL) */}
-                {(activeNet === 'all' || activeNet === 'i2c') && (
+                {/* 6. ESP32 SPI Display Bus -> 1.3" ST7789 IPS (SCK 18, MOSI 19, DC 4, RST 15, CS 21) */}
+                {(activeNet === 'all' || activeNet === 'spi') && (
                   <g className="transition-opacity">
-                    <path d="M 590 210 L 620 210 L 620 90 L 650 90" fill="none" stroke="#06b6d4" strokeWidth="2.5" />
-                    <text x="595" y="150" fill="#06b6d4" fontSize="10" fontFamily="monospace">I2C: GPIO 4 (SDA)</text>
-                    <path d="M 590 230 L 635 230 L 635 110 L 650 110" fill="none" stroke="#06b6d4" strokeWidth="2" strokeDasharray="3 2" />
-                    <text x="595" y="165" fill="#06b6d4" fontSize="10" fontFamily="monospace">I2C: GPIO 15 (SCL)</text>
+                    <path d="M 590 205 L 618 205 L 618 90 L 650 90" fill="none" stroke="#a855f7" strokeWidth="2.5" />
+                    <text x="595" y="142" fill="#c084fc" fontSize="9" fontFamily="monospace">SPI: 18/19 (SCK/MOSI)</text>
+                    <path d="M 590 222 L 632 222 L 632 115 L 650 115" fill="none" stroke="#a855f7" strokeWidth="2" strokeDasharray="3 2" />
+                    <text x="595" y="158" fill="#c084fc" fontSize="9" fontFamily="monospace">Ctrl: 4/15/21</text>
                   </g>
                 )}
 
-                {/* 7. ESP32 Buzzer Driver Stage (GPIO 13 -> NPN/MOSFET -> 5V Buzzer) */}
+                {/* 7. 5x TTP223 Touch Array -> ESP32 GPIO 34, 35, 36, 39, 14 */}
                 {(activeNet === 'all' || activeNet === 'digital') && (
                   <g className="transition-opacity">
-                    <path d="M 590 450 L 620 450 L 620 530 L 650 530" fill="none" stroke="#ef4444" strokeWidth="2.5" />
-                    <rect x="594" y="476" width="52" height="18" rx="4" fill="#1e293b" stroke="#ef4444" strokeWidth="1.5" />
-                    <text x="620" y="488" textAnchor="middle" fill="#fca5a5" fontSize="8" fontFamily="monospace" fontWeight="bold">NPN/FET</text>
+                    <path d="M 650 420 L 590 420" fill="none" stroke="#38bdf8" strokeWidth="2.5" />
+                    <circle cx="620" cy="420" r="3" fill="#38bdf8" />
+                    <text x="592" y="410" fill="#38bdf8" fontSize="8.5" fontFamily="monospace">5x Touch: 34,35,36,39,14</text>
+                  </g>
+                )}
+
+                {/* 8. ESP32 Buzzer Driver Stage (GPIO 13 -> NPN/MOSFET -> 5V Buzzer) */}
+                {(activeNet === 'all' || activeNet === 'digital') && (
+                  <g className="transition-opacity">
+                    <path d="M 590 475 L 620 475 L 620 570 L 650 570" fill="none" stroke="#ef4444" strokeWidth="2.5" />
+                    <rect x="594" y="512" width="52" height="18" rx="4" fill="#1e293b" stroke="#ef4444" strokeWidth="1.5" />
+                    <text x="620" y="524" textAnchor="middle" fill="#fca5a5" fontSize="8" fontFamily="monospace" fontWeight="bold">NPN/FET</text>
                     <text x="592" y="468" fill="#ef4444" fontSize="9" fontFamily="monospace">GPIO 13 → 5V</text>
                   </g>
                 )}
 
-                {/* 8. Experimental Conditioned Dual CT Inputs (GPIO 33 CT1 / GPIO 32 CT2 + Bias Network) */}
+                {/* 9. Experimental Conditioned Dual CT Inputs (GPIO 33 CT1 / GPIO 32 CT2 + Bias Network) */}
                 {(activeNet === 'all' || activeNet === 'analog') && (
                   <g className="transition-opacity">
                     <path d="M 430 500 L 430 530" fill="none" stroke="#10b981" strokeWidth="2.5" strokeDasharray="3 2" />
@@ -467,23 +463,21 @@ export const CircuitDiagramViewer: React.FC = () => {
                   </g>
                 )}
 
-                {/* 9. ESP32 Master to ESP32-CAM Gateway Serial Bridge */}
+                {/* 10. ESP32 Master to ESP32-CAM Gateway Serial Bridge */}
                 {(activeNet === 'all' || activeNet === 'uart') && (
                   <g className="transition-opacity">
-                    <path d="M 590 320 L 650 320" fill="none" stroke="#f59e0b" strokeWidth="2.5" />
-                    <circle cx="620" cy="320" r="3.5" fill="#f59e0b" />
-                    <text x="592" y="312" fill="#f59e0b" fontSize="9" fontFamily="monospace">Hardware Serial Bridge</text>
+                    <path d="M 590 290 L 650 290" fill="none" stroke="#f59e0b" strokeWidth="2.5" />
+                    <circle cx="620" cy="290" r="3.5" fill="#f59e0b" />
+                    <text x="592" y="281" fill="#f59e0b" fontSize="9" fontFamily="monospace">Hardware Serial Bridge</text>
                   </g>
                 )}
 
                 {/* Power Rails (Top and Bottom Bus) */}
                 {(activeNet === 'all' || activeNet === 'power') && (
                   <g className="transition-opacity">
-                    {/* +5V Main Bus */}
                     <line x1="20" y1="20" x2="880" y2="20" stroke="#ef4444" strokeWidth="3" />
-                    <text x="30" y="16" fill="#ef4444" fontSize="11" fontFamily="monospace" fontWeight="bold">+5.0V POWER DISTRIBUTION BUS</text>
+                    <text x="30" y="16" fill="#ef4444" fontSize="11" fontFamily="monospace" fontWeight="bold">+5.0V / +3.3V POWER DISTRIBUTION BUS</text>
 
-                    {/* GND Common Ground Plane */}
                     <line x1="20" y1="720" x2="880" y2="720" stroke="#475569" strokeWidth="3" strokeDasharray="6 3" />
                     <text x="30" y="714" fill="#94a3b8" fontSize="11" fontFamily="monospace" fontWeight="bold">COMMON GND GROUND PLANE (0V)</text>
                   </g>
@@ -540,10 +534,10 @@ export const CircuitDiagramViewer: React.FC = () => {
           <div className="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400 font-mono">
             <div className="flex items-center gap-4 flex-wrap">
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500" /> +5V / +3.3V DC</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> UART Serial (9600)</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Analog ADC (Gas/CT)</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-cyan-400" /> I2C (GPIO 4/15 OLED)</span>
-              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-purple-500" /> SD_MMC Bus</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> UART Serial</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Analog ADC</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-purple-500" /> SPI (ST7789) / SD_MMC</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-sky-400" /> Digital (5x Touch / DHT22)</span>
             </div>
             <div className="text-[11px] text-emerald-400 font-semibold">
               SafeBreath Hardware Rev 2.8f
@@ -577,7 +571,7 @@ export const CircuitDiagramViewer: React.FC = () => {
 
             <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
               {selectedComp.pins.map((pin, idx) => (
-                <div 
+                <div
                   key={idx}
                   className="p-2.5 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition-colors text-xs space-y-1"
                 >
@@ -610,10 +604,10 @@ export const CircuitDiagramViewer: React.FC = () => {
           <div className="p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200 text-xs space-y-1.5">
             <div className="flex items-center gap-1.5 font-bold text-emerald-900">
               <Zap className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-              <span>5V to 3.3V Logic Protection</span>
+              <span>5V / 3.3V Logic Protection</span>
             </div>
             <p className="text-emerald-800 text-[11px] leading-relaxed">
-              Arduino Nano outputs 5V TTL. The SafeBreath V3 circuit routes the Nano TX (D1) through a 1kΩ / 2kΩ resistive voltage divider to protect ESP32 Nano UART RX (GPIO 23), limiting voltage to 3.33V maximum.
+              Arduino Nano outputs 5V TTL, routed through a 1kΩ / 2kΩ divider into ESP32 GPIO 23. Both the 1.3&quot; ST7789 SPI TFT and 5x TTP223 capacitive keys run directly at 3.3V logic.
             </p>
           </div>
         </div>

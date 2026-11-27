@@ -55,7 +55,7 @@ export const SafetyStateEngine: React.FC = () => {
     },
     temp: {
       name: 'Ambient Temperature Indicator',
-      sensor: 'DHT11 Ambient Monitor (0–50 °C ±2 °C)',
+      sensor: 'DHT22 Ambient Monitor (-40 to +80 °C ±0.5 °C)',
       unit: '°C',
       warnEnter: SHARED_THRESHOLDS.temp.warnEnter,
       warnClear: SHARED_THRESHOLDS.temp.warnClear,
@@ -65,7 +65,7 @@ export const SafetyStateEngine: React.FC = () => {
       hysteresis: '5 °C reset deadband (High Heat alert at >= 45 °C clears only < 40 °C)',
       guidance: 'NORMAL < 40 · ELEVATED 40–44 · HIGH HEAT >= 45 (clears < 40 °C)',
       clinical:
-        'Monitors elevated ambient room temperature around the enclosure. Note: DHT11 (±2 °C accuracy) serves ambient monitoring and is not a certified standalone fire or thermal-runaway detector.',
+        'Monitors elevated ambient room temperature around the enclosure. Note: DHT22 (±0.5 °C accuracy) serves ambient monitoring and is not a certified standalone fire or thermal-runaway detector.',
     },
   };
 

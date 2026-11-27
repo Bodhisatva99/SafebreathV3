@@ -9,6 +9,7 @@ import {
   Volume2,
   Monitor,
   Info,
+  Fingerprint,
 } from 'lucide-react';
 
 export const InteractiveHardwareExplorer: React.FC = () => {
@@ -27,6 +28,8 @@ export const InteractiveHardwareExplorer: React.FC = () => {
         return <Wifi className="w-4 h-4 text-sky-700" />;
       case 'display':
         return <Monitor className="w-4 h-4 text-indigo-700" />;
+      case 'input':
+        return <Fingerprint className="w-4 h-4 text-cyan-700" />;
       case 'actuator':
         return <Volume2 className="w-4 h-4 text-amber-700" />;
       case 'storage':
@@ -79,7 +82,7 @@ export const InteractiveHardwareExplorer: React.FC = () => {
                 <span className="text-emerald-800 font-semibold">UART / Analog / Single-Wire</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                {['ze07-co', 'mq-135', 'mq-6', 'dht11', 'ct-sensors'].map((id) => {
+                {['ze07-co', 'mq-135', 'mq-6', 'dht22', 'ct-sensors'].map((id) => {
                   const comp = HARDWARE_COMPONENTS.find((c) => c.id === id)!;
                   const isCurrent = comp.id === selectedId;
                   return (
@@ -95,7 +98,7 @@ export const InteractiveHardwareExplorer: React.FC = () => {
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-bold text-xs text-slate-900 truncate pr-1">
-                          {comp.id === 'ct-sensors' ? 'CT1 / CT2' : comp.name}
+                          {comp.id === 'ct-sensors' ? 'CT1 / CT2' : comp.id === 'dht22' ? 'DHT22' : comp.name}
                         </span>
                         {getComponentIcon(comp.category)}
                       </div>
@@ -110,7 +113,7 @@ export const InteractiveHardwareExplorer: React.FC = () => {
 
             {/* Bus Trace Divider */}
             <div className="flex items-center justify-around px-6">
-              {['ze07-co', 'mq-135', 'mq-6', 'dht11', 'ct-sensors'].map((id) => (
+              {['ze07-co', 'mq-135', 'mq-6', 'dht22', 'ct-sensors'].map((id) => (
                 <div
                   key={id}
                   className={`h-6 w-0.5 transition-colors ${
@@ -149,8 +152,8 @@ export const InteractiveHardwareExplorer: React.FC = () => {
                       </div>
                       <div className={`text-xs ${isCurrent ? 'text-slate-300' : 'text-slate-600'}`}>
                         {id === 'arduino-nano'
-                          ? '100 Hz ADC oversampling & DHT11 decode'
-                          : 'Master state engine, OLED & 85 dB siren'}
+                          ? '100 Hz ADC oversampling & DHT22 decode'
+                          : 'Master state engine, ST7789 IPS & 5x touch'}
                       </div>
                     </button>
                   );
@@ -160,7 +163,7 @@ export const InteractiveHardwareExplorer: React.FC = () => {
 
             {/* Bus Trace Divider */}
             <div className="flex items-center justify-around px-6">
-              {['oled', 'buzzer', 'esp32-cam', 'microsd'].map((id) => (
+              {['st7789', 'ttp223-array', 'buzzer', 'esp32-cam', 'microsd'].map((id) => (
                 <div
                   key={id}
                   className={`h-6 w-0.5 transition-colors ${
@@ -170,14 +173,14 @@ export const InteractiveHardwareExplorer: React.FC = () => {
               ))}
             </div>
 
-            {/* Layer 03: Outputs & Storage */}
+            {/* Layer 03: Outputs, Touch UI & Storage */}
             <div className="space-y-2">
               <div className="text-[11px] font-mono text-slate-500 uppercase tracking-wider flex items-center justify-between">
-                <span>03 · Display, Siren, Cloud Gateway &amp; Storage</span>
-                <span className="text-slate-700 font-semibold">I2C / PWM / SD_MMC</span>
+                <span>03 · ST7789 IPS, 5x Touch, Siren, Cloud &amp; SD</span>
+                <span className="text-slate-700 font-semibold">SPI / GPIO / PWM / SD_MMC</span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                {['oled', 'buzzer', 'esp32-cam', 'microsd'].map((id) => {
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                {['st7789', 'ttp223-array', 'buzzer', 'esp32-cam', 'microsd'].map((id) => {
                   const comp = HARDWARE_COMPONENTS.find((c) => c.id === id)!;
                   const isCurrent = comp.id === selectedId;
                   return (
@@ -192,7 +195,9 @@ export const InteractiveHardwareExplorer: React.FC = () => {
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-bold text-xs text-slate-900 truncate pr-1">{comp.name}</span>
+                        <span className="font-bold text-xs text-slate-900 truncate pr-1">
+                          {comp.id === 'st7789' ? '1.3" ST7789' : comp.id === 'ttp223-array' ? '5x TTP223' : comp.name}
+                        </span>
                         {getComponentIcon(comp.category)}
                       </div>
                       <div className="text-[10px] text-slate-500 font-mono truncate">

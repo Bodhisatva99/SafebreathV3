@@ -245,11 +245,18 @@ export const TechnicalSpecsSection: React.FC = () => {
                   <td className="py-3 px-4 font-sans text-[#6E6E73]">Curve fit unvalidated vs reference propane/LPG test gas</td>
                 </tr>
                 <tr>
-                  <td className="py-3 px-4 font-bold">Aosong DHT11</td>
-                  <td className="py-3 px-4">0–50 °C (±2 °C) · 20–90 % RH (±5 %)</td>
+                  <td className="py-3 px-4 font-bold">Aosong DHT22 (AM2302)</td>
+                  <td className="py-3 px-4">-40 to +80 °C (±0.5 °C) · 0–100 % RH (±2 %)</td>
                   <td className="py-3 px-4">&lt; 2 s power stabilization</td>
-                  <td className="py-3 px-4">1 Hz proprietary single-wire frame</td>
+                  <td className="py-3 px-4">0.5 Hz proprietary single-wire frame</td>
                   <td className="py-3 px-4 font-sans text-[#6E6E73]">Ambient temperature indicator only; not a certified fire detector</td>
+                </tr>
+                <tr>
+                  <td className="py-3 px-4 font-bold">1.3&quot; ST7789 IPS + 5x TTP223</td>
+                  <td className="py-3 px-4">240x240 RGB565 SPI TFT + 5x 3.3V Capacitive Keys</td>
+                  <td className="py-3 px-4">&lt; 0.5 s capacitive baseline auto-cal</td>
+                  <td className="py-3 px-4">SPI (18/19/4/15/21) + Touch (34/35/36/39/14)</td>
+                  <td className="py-3 px-4 font-sans text-[#6E6E73]">Upgraded from 0.96&quot; OLED &amp; 2 touch keys for full menu UI</td>
                 </tr>
                 <tr>
                   <td className="py-3 px-4 font-bold">TMB12A05 + Driver</td>
@@ -394,13 +401,13 @@ export const TechnicalSpecsSection: React.FC = () => {
               <span className="text-xs font-mono text-emerald-700 font-semibold">Node 01 · Acquisition</span>
               <h4 className="text-lg font-bold text-[#1D1D1F] mt-0.5">Arduino Nano V3</h4>
               <p className="text-xs text-[#6E6E73] leading-relaxed mt-1.5">
-                Samples MQ-135, MQ-6, and DHT11 only; sends Nano Frame via 1kΩ/2kΩ divider to ESP32 Master.
+                Samples MQ-135, MQ-6, and DHT22 only; sends Nano Frame via 1kΩ/2kΩ divider to ESP32 Master.
               </p>
             </div>
             <div className="space-y-1.5 pt-3 border-t border-black/[0.06] text-[11px] font-mono">
               <div className="flex justify-between"><span className="text-[#6E6E73]">MQ-135 AO</span><strong className="text-[#1D1D1F]">A0</strong></div>
               <div className="flex justify-between"><span className="text-[#6E6E73]">MQ-6 AO</span><strong className="text-[#1D1D1F]">A1</strong></div>
-              <div className="flex justify-between"><span className="text-[#6E6E73]">DHT11 DATA</span><strong className="text-[#1D1D1F]">D2</strong></div>
+              <div className="flex justify-between"><span className="text-[#6E6E73]">DHT22 DATA</span><strong className="text-[#1D1D1F]">D2</strong></div>
               <div className="flex justify-between"><span className="text-[#6E6E73]">ESP32 UART (Divider)</span><strong className="text-emerald-700">D0 / D1</strong></div>
             </div>
           </div>
@@ -410,11 +417,12 @@ export const TechnicalSpecsSection: React.FC = () => {
               <span className="text-xs font-mono text-emerald-700 font-semibold">Node 02 · Fusion &amp; Safety Core</span>
               <h4 className="text-lg font-bold text-[#1D1D1F] mt-0.5">ESP32 DevKit V1 (Master)</h4>
               <p className="text-xs text-[#6E6E73] leading-relaxed mt-1.5">
-                Fuses direct ZE07-CO + Nano Frame, runs hysteresis, drives OLED, switches 5V siren via NPN/MOSFET driver, and outputs Unified 16-Byte Frame to CAM.
+                Fuses direct ZE07-CO + Nano Frame, runs hysteresis, renders 1.3&quot; ST7789 SPI IPS, reads 5x TTP223 keys, switches 5V siren via NPN/MOSFET, and outputs Unified 16-Byte Frame to CAM.
               </p>
             </div>
             <div className="space-y-1.5 pt-3 border-t border-black/[0.06] text-[11px] font-mono">
-              <div className="flex justify-between"><span className="text-[#6E6E73]">OLED SDA / SCL</span><strong className="text-[#1D1D1F]">GPIO 4 / 15</strong></div>
+              <div className="flex justify-between"><span className="text-[#6E6E73]">ST7789 SPI (SCK/MOSI/DC/RST/CS)</span><strong className="text-[#1D1D1F]">18/19/4/15/21</strong></div>
+              <div className="flex justify-between"><span className="text-[#6E6E73]">5x TTP223 Touch Array</span><strong className="text-cyan-700">34,35,36,39,14</strong></div>
               <div className="flex justify-between"><span className="text-[#6E6E73]">Buzzer Driver Gate</span><strong className="text-rose-700">GPIO 13</strong></div>
               <div className="flex justify-between"><span className="text-[#6E6E73]">CT1 / CT2 (Exp.)</span><strong className="text-[#1D1D1F]">GPIO 33 / 32</strong></div>
               <div className="flex justify-between"><span className="text-[#6E6E73]">Nano RX / TX</span><strong className="text-[#1D1D1F]">GPIO 23 / 22</strong></div>
@@ -448,7 +456,7 @@ export const TechnicalSpecsSection: React.FC = () => {
               Protocol Clarification · Which Controller Generates Which Link
             </div>
             <p>
-              <strong className="text-[#1D1D1F]">1. Nano &rarr; ESP32 Master (GPIO 23/22):</strong> Carries only Arduino Nano readings (MQ-135 A0, MQ-6 A1, DHT11 D2). The Nano never connects to ZE07-CO.
+              <strong className="text-[#1D1D1F]">1. Nano &rarr; ESP32 Master (GPIO 23/22):</strong> Carries only Arduino Nano readings (MQ-135 A0, MQ-6 A1, DHT22 D2). The Nano never connects to ZE07-CO.
             </p>
             <p>
               <strong className="text-[#1D1D1F]">2. ZE07-CO &rarr; ESP32 Master (GPIO 16/17):</strong> Direct 9600-baud UART CO stream into ESP32 Dev Master.
@@ -474,8 +482,8 @@ export const TechnicalSpecsSection: React.FC = () => {
                 <tr><td className="py-3 px-4 font-semibold text-emerald-700">0x04–0x05</td><td className="py-3 px-4 font-bold">RAW_MQ135_ADC</td><td className="py-3 px-4 text-[#6E6E73]">uint16_t</td><td className="py-3 px-4">Relayed from Nano A0 via GPIO 23/22</td></tr>
                 <tr><td className="py-3 px-4 font-semibold text-emerald-700">0x06–0x07</td><td className="py-3 px-4 font-bold">RAW_MQ6_ADC</td><td className="py-3 px-4 text-[#6E6E73]">uint16_t</td><td className="py-3 px-4">Relayed from Nano A1 via GPIO 23/22</td></tr>
                 <tr><td className="py-3 px-4 font-semibold text-emerald-700">0x08–0x09</td><td className="py-3 px-4 font-bold">ZE07_CO_PPM</td><td className="py-3 px-4 text-[#6E6E73]">uint16_t</td><td className="py-3 px-4">Inserted by ESP32 Master from UART2 (GPIO 16/17) scaled by 10</td></tr>
-                <tr><td className="py-3 px-4 font-semibold text-emerald-700">0x0A</td><td className="py-3 px-4 font-bold">TEMP_C</td><td className="py-3 px-4 text-[#6E6E73]">uint8_t</td><td className="py-3 px-4">Relayed from Nano DHT11 (D2)</td></tr>
-                <tr><td className="py-3 px-4 font-semibold text-emerald-700">0x0B</td><td className="py-3 px-4 font-bold">HUMIDITY_PCT</td><td className="py-3 px-4 text-[#6E6E73]">uint8_t</td><td className="py-3 px-4">Relayed from Nano DHT11 (D2)</td></tr>
+                <tr><td className="py-3 px-4 font-semibold text-emerald-700">0x0A</td><td className="py-3 px-4 font-bold">TEMP_C</td><td className="py-3 px-4 text-[#6E6E73]">uint8_t</td><td className="py-3 px-4">Relayed from Nano DHT22 (D2)</td></tr>
+                <tr><td className="py-3 px-4 font-semibold text-emerald-700">0x0B</td><td className="py-3 px-4 font-bold">HUMIDITY_PCT</td><td className="py-3 px-4 text-[#6E6E73]">uint8_t</td><td className="py-3 px-4">Relayed from Nano DHT22 (D2)</td></tr>
                 <tr><td className="py-3 px-4 font-semibold text-emerald-700">0x0C</td><td className="py-3 px-4 font-bold">SENSOR_FLAGS</td><td className="py-3 px-4 text-[#6E6E73]">uint8_t</td><td className="py-3 px-4">Bitmask: CO_OK | MQ135_OK | MQ6_OK | DHT_OK | ALARM</td></tr>
                 <tr><td className="py-3 px-4 font-semibold text-emerald-700">0x0D–0x0E</td><td className="py-3 px-4 font-bold">CRC16_CCITT</td><td className="py-3 px-4 text-[#6E6E73]">uint16_t</td><td className="py-3 px-4">CRC-16-CCITT (0x1021 / 0xFFFF) over bytes 0x02–0x0C</td></tr>
                 <tr><td className="py-3 px-4 font-semibold text-emerald-700">0x0F</td><td className="py-3 px-4 font-bold">PACKET_TAIL</td><td className="py-3 px-4 text-[#6E6E73]">uint8_t</td><td className="py-3 px-4">Delimiter 0x0D (&apos;\r&apos;) for packet verification</td></tr>
@@ -527,7 +535,7 @@ export const TechnicalSpecsSection: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
             <div className="p-4 rounded-2xl bg-[#F5F5F7] border border-black/[0.05] space-y-2">
               <div className="font-bold text-[#1D1D1F]">
-                Batch Manufacturing Target Breakdown (₹3,450 / unit @ 100+)
+                Batch Manufacturing Target Breakdown (₹{ECONOMICS_SUMMARY.batchProductionTargetInr.toLocaleString('en-IN')} / unit @ 100+)
               </div>
               {ECONOMICS_SUMMARY.batchBreakdown.map((b, i) => (
                 <div key={i} className="flex justify-between text-[#6E6E73]">
@@ -539,7 +547,7 @@ export const TechnicalSpecsSection: React.FC = () => {
 
             <div className="p-4 rounded-2xl bg-[#F5F5F7] border border-black/[0.05] space-y-2">
               <div className="font-bold text-[#1D1D1F]">
-                Target Retail Price Model Breakdown (₹5,999 MSRP)
+                Target Retail Price Model Breakdown (₹{ECONOMICS_SUMMARY.expectedRetailTargetInr.toLocaleString('en-IN')} MSRP)
               </div>
               {ECONOMICS_SUMMARY.retailBreakdown.map((r, i) => (
                 <div key={i} className="flex justify-between text-[#6E6E73]">
